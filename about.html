@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Road Monitor Palu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-road"></i>
+                    <span>Road Monitor Palu</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <h1>About Road Monitor Palu</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-controls">
+                    <button class="btn-icon" title="Notifications" id="notificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/32x32/4A90E2/FFFFFF?text=U" alt="User">
+                        <span id="userName">User</span>
+                        <div class="dropdown">
+                            <button class="dropdown-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="#" id="profileLink">Profile</a>
+                                <a href="#" id="settingsLink">Settings</a>
+                                <a href="#" id="logoutLink">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <div class="nav-container">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="map.html" class="nav-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Map View</span>
+                </a>
+                <a href="report.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Report Damage</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-list-alt"></i>
+                    <span>All Reports</span>
+                </a>
+                <a href="admin-validation.html" class="nav-item admin-only">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Validate Reports</span>
+                </a>
+                <a href="about.html" class="nav-item active">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="about-container">
+                <!-- Hero Section -->
+                <section class="hero-section">
+                    <div class="hero-content">
+                        <h1>Road Monitor Palu</h1>
+                        <p class="hero-subtitle">Web GIS Road Monitoring System for Palu City, Central Sulawesi</p>
+                        <p class="hero-description">
+                            A comprehensive platform designed to monitor, report, and manage road conditions in Palu City. 
+                            Our system empowers citizens to actively participate in maintaining better infrastructure 
+                            while providing city officials with real-time data for informed decision-making.
+                        </p>
+                    </div>
+                    <div class="hero-image">
+                        <i class="fas fa-road"></i>
+                    </div>
+                </section>
+
+                <!-- Mission Section -->
+                <section class="mission-section">
+                    <div class="section-header">
+                        <h2>Our Mission</h2>
+                        <p>Improving road infrastructure through community engagement and technology</p>
+                    </div>
+                    <div class="mission-grid">
+                        <div class="mission-card">
+                            <div class="mission-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3>Community Engagement</h3>
+                            <p>Empowering citizens to report road issues and participate in infrastructure improvement.</p>
+                        </div>
+                        <div class="mission-card">
+                            <div class="mission-icon">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <h3>Real-time Monitoring</h3>
+                            <p>Providing accurate, up-to-date information about road conditions across Palu City.</p>
+                        </div>
+                        <div class="mission-card">
+                            <div class="mission-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3>Data-Driven Decisions</h3>
+                            <p>Supporting city officials with comprehensive data for better infrastructure planning.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Features Section -->
+                <section class="features-section">
+                    <div class="section-header">
+                        <h2>Key Features</h2>
+                        <p>Comprehensive tools for road monitoring and management</p>
+                    </div>
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <h4>Interactive GIS Map</h4>
+                            <p>Real-time visualization of road conditions with detailed mapping capabilities.</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h4>Damage Reporting</h4>
+                            <p>Easy-to-use forms for citizens to report road damages and maintenance issues.</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <h4>Dashboard Analytics</h4>
+                            <p>Comprehensive dashboard with statistics and progress tracking.</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <h4>Mobile Responsive</h4>
+                            <p>Fully responsive design that works on all devices and screen sizes.</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-bell"></i>
+                            <h4>Real-time Notifications</h4>
+                            <p>Instant updates on report status and maintenance progress.</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-download"></i>
+                            <h4>Data Export</h4>
+                            <p>Export reports and data for analysis and record-keeping.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Technology Section -->
+                <section class="technology-section">
+                    <div class="section-header">
+                        <h2>Technology Stack</h2>
+                        <p>Built with modern web technologies for optimal performance</p>
+                    </div>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <i class="fab fa-html5"></i>
+                            <h4>HTML5</h4>
+                            <p>Semantic markup and modern web standards</p>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fab fa-css3-alt"></i>
+                            <h4>CSS3</h4>
+                            <p>Responsive design with modern styling</p>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fab fa-js-square"></i>
+                            <h4>JavaScript</h4>
+                            <p>Interactive functionality and dynamic content</p>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-map"></i>
+                            <h4>Leaflet.js</h4>
+                            <p>Open-source mapping library for GIS functionality</p>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-database"></i>
+                            <h4>Local Storage</h4>
+                            <p>Client-side data persistence and caching</p>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-cloud"></i>
+                            <h4>OpenStreetMap</h4>
+                            <p>Free and open-source mapping data</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Team Section -->
+                <section class="team-section">
+                    <div class="section-header">
+                        <h2>Development Team</h2>
+                        <p>Meet the developers behind Road Monitor Palu</p>
+                    </div>
+                    <div class="team-grid">
+                        <div class="team-member">
+                            <div class="member-photo">
+                                <img src="https://via.placeholder.com/150x150/4A90E2/FFFFFF?text=JD" alt="John Doe">
+                            </div>
+                            <h3>John Doe</h3>
+                            <p class="member-role">Lead Developer</p>
+                            <p class="member-bio">Full-stack developer with expertise in web GIS applications and user interface design.</p>
+                            <div class="member-social">
+                                <a href="#"><i class="fab fa-linkedin"></i></a>
+                                <a href="#"><i class="fab fa-github"></i></a>
+                                <a href="#"><i class="fas fa-envelope"></i></a>
+                            </div>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-photo">
+                                <img src="https://via.placeholder.com/150x150/32CD32/FFFFFF?text=JS" alt="Jane Smith">
+                            </div>
+                            <h3>Jane Smith</h3>
+                            <p class="member-role">GIS Specialist</p>
+                            <p class="member-bio">Geographic Information Systems expert with experience in spatial data analysis and mapping.</p>
+                            <div class="member-social">
+                                <a href="#"><i class="fab fa-linkedin"></i></a>
+                                <a href="#"><i class="fab fa-github"></i></a>
+                                <a href="#"><i class="fas fa-envelope"></i></a>
+                            </div>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-photo">
+                                <img src="https://via.placeholder.com/150x150/FF6347/FFFFFF?text=MJ" alt="Mike Johnson">
+                            </div>
+                            <h3>Mike Johnson</h3>
+                            <p class="member-role">UI/UX Designer</p>
+                            <p class="member-bio">User experience designer focused on creating intuitive and accessible interfaces.</p>
+                            <div class="member-social">
+                                <a href="#"><i class="fab fa-linkedin"></i></a>
+                                <a href="#"><i class="fab fa-dribbble"></i></a>
+                                <a href="#"><i class="fas fa-envelope"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Contact Section -->
+                <section class="contact-section">
+                    <div class="section-header">
+                        <h2>Contact Information</h2>
+                        <p>Get in touch with our team for support, feedback, or collaboration</p>
+                    </div>
+                    <div class="contact-grid">
+                        <div class="contact-card">
+                            <div class="contact-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <h3>Email</h3>
+                            <p>info@roadmonitorpalu.com</p>
+                            <p>support@roadmonitorpalu.com</p>
+                        </div>
+                        <div class="contact-card">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <h3>Phone</h3>
+                            <p>+62 451 123 4567</p>
+                            <p>+62 451 123 4568</p>
+                        </div>
+                        <div class="contact-card">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <h3>Address</h3>
+                            <p>Jl. Sudirman No. 123</p>
+                            <p>Palu, Central Sulawesi 94111</p>
+                        </div>
+                        <div class="contact-card">
+                            <div class="contact-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3>Office Hours</h3>
+                            <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
+                            <p>Saturday: 9:00 AM - 1:00 PM</p>
+                        </div>
+                    </div>
+                </section>
+
+                
+
+                <!-- Footer -->
+                <footer class="about-footer">
+                    
+                    <div class="footer-bottom">
+                        <p>&copy; 2024 Road Monitor Palu. All rights reserved.</p>
+                        <p>Developed with ❤️ for Palu City, Central Sulawesi</p>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="about.js"></script>
+</body>
+</html>
+

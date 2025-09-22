@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Damage - Road Monitor Palu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-road"></i>
+                    <span>Road Monitor Palu</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <h1>Report Road Damage</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-controls">
+                    <button class="btn-icon" title="Notifications" id="notificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/32x32/4A90E2/FFFFFF?text=U" alt="User">
+                        <span id="userName">User</span>
+                        <div class="dropdown">
+                            <button class="dropdown-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="#" id="profileLink">Profile</a>
+                                <a href="#" id="settingsLink">Settings</a>
+                                <a href="#" id="logoutLink">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <div class="nav-container">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="map.html" class="nav-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Map View</span>
+                </a>
+                <a href="report.html" class="nav-item active">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Report Damage</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-list-alt"></i>
+                    <span>All Reports</span>
+                </a>
+                <a href="admin-validation.html" class="nav-item admin-only">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Validate Reports</span>
+                </a>
+                <a href="about.html" class="nav-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="report-container">
+                <div class="report-form-section">
+                    <div class="form-card">
+                        <div class="card-header">
+                            <h2>Report Road Damage</h2>
+                            <p>Help us maintain better roads in Palu City by reporting any damage you encounter.</p>
+                        </div>
+
+                        <form class="report-form" id="damageReportForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="damageSeverity">Damage Type *</label>
+                                    <select id="damageSeverity" name="damageSeverity" required>
+                                        <option value="">Select damage type</option>
+                                        <option value="Minor Damage">Minor Damage</option>
+                                        <option value="Medium Damage">Medium Damage</option>
+                                        <option value="Severe Damage">Severe Damage</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="priority">Priority Level (Frontend only)</label>
+                                    <select id="priority" name="priority">
+                                        <option value="">Select priority</option>
+                                        <option value="high">High - Immediate attention needed</option>
+                                        <option value="medium">Medium - Should be addressed soon</option>
+                                        <option value="low">Low - Can be scheduled for later</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="streetName">Street Name *</label>
+                                    <input type="text" id="streetName" name="streetName" placeholder="Enter street name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="coordinates">Coordinates *</label>
+                                    <input type="text" id="coordinates" name="coordinates" placeholder="Lat, Lng (auto-filled from map)" required readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="roadPhoto">Road Photo</label>
+                                <div class="file-upload">
+                                    <input type="file" id="roadPhoto" name="roadPhoto" accept="image/*">
+                                    <label for="roadPhoto" class="file-upload-label">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Upload Road Photo</span>
+                                    </label>
+                                </div>
+                                <div class="file-preview" id="filePreview"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="description">Description </label>
+                                <textarea id="description" name="description" rows="4" placeholder="Please provide detailed description of the damage..." ></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="reporterName">Your Name *</label>
+                                    <input type="text" id="reporterName" name="reporterName" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="reporterEmail">Email</label>
+                                    <input type="email" id="reporterEmail" name="reporterEmail" placeholder="Optional - for updates">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="reporterPhone">Phone</label>
+                                    <input type="tel" id="reporterPhone" name="reporterPhone" placeholder="Optional - for urgent cases">
+                                </div>
+                                
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" id="previewBtn">
+                                    <i class="fas fa-eye"></i>
+                                    Preview
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Submit Report
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="map-section">
+                    <div class="map-card">
+                        <div class="card-header">
+                            <h3>Select Location on Map</h3>
+                            <p>Click on the map to mark the exact location of the damage.</p>
+                        </div>
+                        <div class="map-container-small">
+                            <div id="locationMap"></div>
+                        </div>
+                        <div class="map-instructions">
+                            <p><i class="fas fa-info-circle"></i> Click on the map to set the exact location of the damage.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Report Preview</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="preview-content" id="previewContent">
+                    <!-- Preview content will be generated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="editReport">Edit</button>
+                <button type="button" class="btn-primary" id="confirmSubmit">Confirm Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header success">
+                <h3><i class="fas fa-check-circle"></i> Report Submitted Successfully!</h3>
+            </div>
+            <div class="modal-body">
+                <p>Thank you for reporting this road damage. Your report has been submitted and will be reviewed by our team.</p>
+                <div class="report-summary" id="reportSummary">
+                    <!-- Report summary will be shown here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" id="viewReport">View Report</button>
+                <button type="button" class="btn-secondary" id="newReport">Submit Another</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="auth.js"></script>
+    <script src="report.js"></script>
+</body>
+</html>
+

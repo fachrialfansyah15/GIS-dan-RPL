@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Road Monitor Palu - Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <i class="fas fa-road"></i>
+                    <h1>Road Monitor Palu</h1>
+                </div>
+                <p>Web GIS Road Monitoring System</p>
+                <p class="subtitle">Palu City, Central Sulawesi</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="tab-btn active" data-tab="user">User Login</button>
+                <button class="tab-btn" data-tab="admin">Admin Login</button>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember">
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Don't have an account? <a href="#" id="registerLink">Register here</a></p>
+                <p><a href="#" id="forgotPassword">Forgot Password?</a></p>
+            </div>
+        </div>
+
+            <div class="login-info">
+                <h2>Welcome to Road Monitor Palu</h2>
+                <p>Monitor road conditions, report damages, and contribute to better infrastructure in Palu City, Central Sulawesi.</p>
+                
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <h3>Interactive Map</h3>
+                        <p>View real-time road conditions on our GIS map</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Report Damage</h3>
+                        <p>Report road damages and maintenance issues</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Analytics</h3>
+                        <p>Track road conditions and maintenance progress</p>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

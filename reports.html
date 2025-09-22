@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Reports - Road Monitor Palu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-road"></i>
+                    <span>Road Monitor Palu</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <h1>All Reports</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-controls">
+                    <button class="btn-icon" title="Notifications" id="notificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/32x32/4A90E2/FFFFFF?text=U" alt="User">
+                        <span id="userName">User</span>
+                        <div class="dropdown">
+                            <button class="dropdown-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="#" id="profileLink">Profile</a>
+                                <a href="#" id="settingsLink">Settings</a>
+                                <a href="#" id="logoutLink">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <div class="nav-container">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="map.html" class="nav-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Map View</span>
+                </a>
+                <a href="report.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Report Damage</span>
+                </a>
+                <a href="reports.html" class="nav-item active">
+                    <i class="fas fa-list-alt"></i>
+                    <span>All Reports</span>
+                </a>
+                <a href="admin-validation.html" class="nav-item admin-only">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Validate Reports</span>
+                </a>
+                <a href="about.html" class="nav-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="reports-container">
+                <div class="reports-header">
+                    <h2>Road Damage Reports</h2>
+                    <div class="reports-filters">
+                        <select id="statusFilter">
+                            <option value="all">All Status</option>
+                            <option value="reported">Reported</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <select id="priorityFilter">
+                            <option value="all">All Priorities</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="reports-list" id="reportsList">
+                    <!-- Reports will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="reports.js"></script>
+</body>
+</html>

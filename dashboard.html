@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Road Monitor Palu</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-road"></i>
+                    <span>Road Monitor Palu</span>
+                </div>
+            </div>
+            <div class="header-center">
+                <h1>Dashboard - Road Damage Reports</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-controls">
+                    <button class="btn-icon" title="Notifications" id="notificationsBtn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/32x32/4A90E2/FFFFFF?text=U" alt="User">
+                        <span id="userName">User</span>
+                        <div class="dropdown">
+                            <button class="dropdown-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="#" id="profileLink">Profile</a>
+                                <a href="#" id="settingsLink">Settings</a>
+                                <a href="#" id="logoutLink">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <div class="nav-container">
+                <a href="dashboard.html" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="map.html" class="nav-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Map View</span>
+                </a>
+                <a href="report.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Report Damage</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-list-alt"></i>
+                    <span>All Reports</span>
+                </a>
+                <a href="admin-validation.html" class="nav-item admin-only">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Validate Reports</span>
+                </a>
+                <a href="about.html" class="nav-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Statistics Cards -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Active Reports</div>
+                        <div class="stat-change positive">+3 this week</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">In Progress</div>
+                        <div class="stat-change positive">+2 this week</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">156</div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-change positive">+12 this week</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">2.3</div>
+                        <div class="stat-label">Avg. Response (days)</div>
+                        <div class="stat-change negative">+0.2 days</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-grid">
+                <!-- Recent Reports -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Recent Reports</h3>
+                        <a href="reports.html" class="view-all">View All</a>
+                    </div>
+                    <div class="card-content">
+                        <div class="report-list">
+                            <div class="report-item">
+                                <div class="report-icon high">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="report-details">
+                                    <h4>Pothole on Jl. Sudirman</h4>
+                                    <p>Large pothole causing traffic disruption</p>
+                                    <span class="report-meta">Reported 2 hours ago by John Doe</span>
+                                </div>
+                                <div class="report-status high">High Priority</div>
+                            </div>
+                            
+                            <div class="report-item">
+                                <div class="report-icon medium">
+                                    <i class="fas fa-road"></i>
+                                </div>
+                                <div class="report-details">
+                                    <h4>Cracked Road Surface</h4>
+                                    <p>Multiple cracks on Jl. Ahmad Yani</p>
+                                    <span class="report-meta">Reported 5 hours ago by Jane Smith</span>
+                                </div>
+                                <div class="report-status medium">Medium Priority</div>
+                            </div>
+                            
+                            <div class="report-item">
+                                <div class="report-icon low">
+                                    <i class="fas fa-sign"></i>
+                                </div>
+                                <div class="report-details">
+                                    <h4>Missing Road Sign</h4>
+                                    <p>Stop sign missing at intersection</p>
+                                    <span class="report-meta">Reported 1 day ago by Mike Johnson</span>
+                                </div>
+                                <div class="report-status low">Low Priority</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Preview -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Map Overview</h3>
+                        <a href="map.html" class="view-all">View Full Map</a>
+                    </div>
+                    <div class="card-content">
+                        <div id="mapPreview"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="quick-actions">
+                            <a href="report.html" class="action-btn primary">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Report New Damage</span>
+                            </a>
+                            <a href="map.html" class="action-btn secondary">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <span>View Map</span>
+                            </a>
+                            <a href="reports.html" class="action-btn secondary">
+                                <i class="fas fa-list-alt"></i>
+                                <span>View All Reports</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority Areas -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3>Priority Areas</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="priority-list">
+                            <div class="priority-item">
+                                <div class="priority-bar high"></div>
+                                <div class="priority-info">
+                                    <h4>Jl. Sudirman</h4>
+                                    <p>5 active reports</p>
+                                </div>
+                            </div>
+                            <div class="priority-item">
+                                <div class="priority-bar medium"></div>
+                                <div class="priority-info">
+                                    <h4>Jl. Ahmad Yani</h4>
+                                    <p>3 active reports</p>
+                                </div>
+                            </div>
+                            <div class="priority-item">
+                                <div class="priority-bar low"></div>
+                                <div class="priority-info">
+                                    <h4>Jl. Gatot Subroto</h4>
+                                    <p>2 active reports</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
+
