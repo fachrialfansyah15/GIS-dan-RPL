@@ -9,6 +9,7 @@ class AboutPage {
         this.checkAuth();
         this.setupEventListeners();
         this.initializeAnimations();
+        this.setupMobileNav();
     }
 
     checkAuth() {
@@ -66,6 +67,16 @@ class AboutPage {
             pressKitBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.downloadPressKit();
+            });
+        }
+    }
+
+    setupMobileNav() {
+        const nav = document.getElementById('mainNav');
+        const toggle = document.getElementById('navToggle');
+        if (nav && toggle) {
+            toggle.addEventListener('click', () => {
+                nav.classList.toggle('open');
             });
         }
     }

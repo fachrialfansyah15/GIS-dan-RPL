@@ -15,6 +15,7 @@ class RoadMonitorMap {
         this.initializeMap();
         this.setupEventListeners();
         this.loadMapData();
+        this.setupMobileNav();
     }
 
     checkAuth() {
@@ -125,6 +126,16 @@ class RoadMonitorMap {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 window.auth.logout();
+            });
+        }
+    }
+
+    setupMobileNav() {
+        const nav = document.getElementById('mainNav');
+        const toggle = document.getElementById('navToggle');
+        if (nav && toggle) {
+            toggle.addEventListener('click', () => {
+                nav.classList.toggle('open');
             });
         }
     }

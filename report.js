@@ -13,6 +13,7 @@ class ReportForm {
         this.initializeLocationMap();
         this.setupEventListeners();
         this.loadFormData();
+        this.setupMobileNav();
     }
 
     checkAuth() {
@@ -124,6 +125,16 @@ class ReportForm {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 window.auth.logout();
+            });
+        }
+    }
+
+    setupMobileNav() {
+        const nav = document.getElementById('mainNav');
+        const toggle = document.getElementById('navToggle');
+        if (nav && toggle) {
+            toggle.addEventListener('click', () => {
+                nav.classList.toggle('open');
             });
         }
     }

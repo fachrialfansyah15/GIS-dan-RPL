@@ -297,6 +297,24 @@ body {
     margin: 0 auto;
 }
 
+/* Mobile hamburger */
+.hamburger {
+    display: none;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+}
+
+.hamburger i {
+    font-size: 18px;
+}
+
 .nav-item {
     display: flex;
     align-items: center;
@@ -1723,6 +1741,18 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .login-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        max-width: 560px;
+    }
+    .login-card {
+        max-width: 100%;
+        padding: 24px;
+    }
+    .login-info {
+        padding: 0 4px;
+    }
     .sidebar {
         width: 250px;
     }
@@ -1730,6 +1760,20 @@ body {
     .header-center h1 {
         font-size: 16px;
     }
+
+    /* Collapsible navigation */
+    .hamburger { display: flex; }
+    .navigation { padding: 10px 15px; }
+    .nav-container {
+        flex-direction: column;
+        max-width: none;
+        margin: 0;
+        display: none;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+    }
+    .navigation.open .nav-container { display: flex; }
+    .nav-item { padding: 12px 15px; }
     
     .tool-group {
         grid-template-columns: 1fr;
@@ -1742,6 +1786,16 @@ body {
     .stat-card {
         padding: 12px;
     }
+
+    /* Forms stack */
+    .report-container { grid-template-columns: 1fr; gap: 20px; }
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
+    .report-form { padding: 20px; }
+    .report-form .form-group input,
+    .report-form .form-group select,
+    .report-form .form-group textarea { width: 100%; }
+    .form-actions { flex-direction: column; }
+    .form-actions .btn-primary, .form-actions .btn-secondary { width: 100%; justify-content: center; }
     
     .map-legend {
         bottom: 10px;
@@ -1781,7 +1835,16 @@ body {
         margin: 10% auto;
         width: 95%;
     }
+
+    /* Readability and touch targets */
+    body { font-size: 15px; }
+    .btn-primary, .btn-secondary, .login-btn { padding: 14px 18px; font-size: 16px; }
+    .nav-item { font-size: 15px; }
 }
+
+/* Table responsiveness helper */
+.table-responsive { width: 100%; overflow-x: auto; }
+.table-responsive table { min-width: 600px; }
 
 /* Custom Leaflet Styles */
 .leaflet-popup-content-wrapper {

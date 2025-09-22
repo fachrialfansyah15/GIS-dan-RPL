@@ -11,6 +11,7 @@ class Dashboard {
         this.initializeMapPreview();
         this.setupEventListeners();
         this.loadDashboardData();
+        this.setupMobileNav();
     }
 
     checkAuth() {
@@ -129,6 +130,16 @@ class Dashboard {
         if (notificationBtn) {
             notificationBtn.addEventListener('click', () => {
                 this.showNotifications();
+            });
+        }
+    }
+
+    setupMobileNav() {
+        const nav = document.getElementById('mainNav');
+        const toggle = document.getElementById('navToggle');
+        if (nav && toggle) {
+            toggle.addEventListener('click', () => {
+                nav.classList.toggle('open');
             });
         }
     }
