@@ -131,11 +131,25 @@ class RoadMonitorMap {
     }
 
     setupMobileNav() {
-        const nav = document.getElementById('mainNav');
-        const toggle = document.getElementById('navToggle');
-        if (nav && toggle) {
-            toggle.addEventListener('click', () => {
-                nav.classList.toggle('open');
+        // Sidebar toggle for mobile
+        const sidebar = document.getElementById('sidebarNav');
+        const toggle = document.getElementById('sidebarToggle');
+        if (sidebar && toggle) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+            });
+            // Close sidebar when clicking outside or on a nav link
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle) {
+                    sidebar.classList.remove('open');
+                }
+            });
+            // Close sidebar on nav link click
+            sidebar.querySelectorAll('.nav-item').forEach(link => {
+                link.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                });
             });
         }
     }

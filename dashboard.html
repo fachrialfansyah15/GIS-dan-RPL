@@ -12,6 +12,9 @@
     <div class="app-container">
         <!-- Header -->
         <header class="header">
+            <button class="hamburger" id="sidebarToggle" aria-label="Open sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
             <div class="header-left">
                 <div class="logo">
                     <i class="fas fa-road"></i>
@@ -45,37 +48,12 @@
             </div>
         </header>
 
-        <!-- Navigation -->
-        <nav class="navigation" id="mainNav">
-            <button class="hamburger" id="navToggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="nav-container">
-                <a href="dashboard.html" class="nav-item active">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="map.html" class="nav-item">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <span>Map View</span>
-                </a>
-                <a href="report.html" class="nav-item">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Report Damage</span>
-                </a>
-                <a href="reports.html" class="nav-item">
-                    <i class="fas fa-list-alt"></i>
-                    <span>All Reports</span>
-                </a>
-                <a href="admin-validation.html" class="nav-item admin-only">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Validate Reports</span>
-                </a>
-                <a href="about.html" class="nav-item">
-                    <i class="fas fa-info-circle"></i>
-                    <span>About</span>
-                </a>
-            </div>
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebarNav">
+            <a href="dashboard.html" class="nav-item active"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+            <a href="map.html" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
+            <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Reports</span></a>
+            <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
         </nav>
 
         <!-- Main Content -->
@@ -184,29 +162,6 @@
                     </div>
                     <div class="card-content">
                         <div id="mapPreview"></div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3>Quick Actions</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="quick-actions">
-                            <a href="report.html" class="action-btn primary">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>Report New Damage</span>
-                            </a>
-                            <a href="map.html" class="action-btn secondary">
-                                <i class="fas fa-map-marked-alt"></i>
-                                <span>View Map</span>
-                            </a>
-                            <a href="reports.html" class="action-btn secondary">
-                                <i class="fas fa-list-alt"></i>
-                                <span>View All Reports</span>
-                            </a>
-                        </div>
                     </div>
                 </div>
 

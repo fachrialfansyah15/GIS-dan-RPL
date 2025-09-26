@@ -123,7 +123,7 @@ class Dashboard {
             });
         }
 
-        // Export data functionality removed
+        // Removed exportData method and all export references
 
         // Notification button
         const notificationBtn = document.getElementById('notificationsBtn');
@@ -135,11 +135,25 @@ class Dashboard {
     }
 
     setupMobileNav() {
-        const nav = document.getElementById('mainNav');
-        const toggle = document.getElementById('navToggle');
-        if (nav && toggle) {
-            toggle.addEventListener('click', () => {
-                nav.classList.toggle('open');
+        // Sidebar toggle for mobile
+        const sidebar = document.getElementById('sidebarNav');
+        const toggle = document.getElementById('sidebarToggle');
+        if (sidebar && toggle) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+            });
+            // Close sidebar when clicking outside or on a nav link
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle) {
+                    sidebar.classList.remove('open');
+                }
+            });
+            // Close sidebar on nav link click
+            sidebar.querySelectorAll('.nav-item').forEach(link => {
+                link.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                });
             });
         }
     }
@@ -253,245 +267,4 @@ class Dashboard {
 
         const area = areas[areaIndex];
         if (area) {
-            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`);
-        }
-    }
-
-    exportData() {
-        // Simulate data export
-        const data = {
-            timestamp: new Date().toISOString(),
-            activeReports: 24,
-            inProgress: 8,
-            completed: 156,
-            avgResponse: 2.3,
-            user: window.auth.getCurrentUser()
-        };
-
-        const dataStr = JSON.stringify(data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `road-monitor-data-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        this.showMessage('Data exported successfully!', 'success');
-    }
-
-    showNotifications() {
-        const notifications = [
-            {
-                title: 'New Report Submitted',
-                message: 'A new road damage report has been submitted for Jl. Sudirman',
-                time: '5 minutes ago',
-                type: 'info'
-            },
-            {
-                title: 'Report Status Updated',
-                message: 'Report RPT-001 has been marked as "In Progress"',
-                time: '1 hour ago',
-                type: 'success'
-            },
-            {
-                title: 'Maintenance Completed',
-                message: 'Road maintenance on Jl. Ahmad Yani has been completed',
-                time: '2 hours ago',
-                type: 'success'
-            }
-        ];
-
-        // Create notification dropdown
-        const dropdown = document.createElement('div');
-        dropdown.className = 'notification-dropdown';
-        dropdown.innerHTML = `
-            <div class="notification-header">
-                <h4>Notifications</h4>
-                <button class="close-notifications">&times;</button>
-            </div>
-            <div class="notification-list">
-                ${notifications.map(notif => `
-                    <div class="notification-item ${notif.type}">
-                        <div class="notification-icon">
-                            <i class="fas fa-${notif.type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-                        </div>
-                        <div class="notification-content">
-                            <h5>${notif.title}</h5>
-                            <p>${notif.message}</p>
-                            <span class="notification-time">${notif.time}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        // Add styles
-        dropdown.style.cssText = `
-            position: absolute;
-            top: 100%;
-            right: 0;
-            width: 350px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 1000;
-            max-height: 400px;
-            overflow-y: auto;
-        `;
-
-        // Position relative to notification button
-        const notificationBtn = document.getElementById('notificationsBtn');
-        notificationBtn.style.position = 'relative';
-        notificationBtn.appendChild(dropdown);
-
-        // Close dropdown when clicking outside
-        setTimeout(() => {
-            document.addEventListener('click', (e) => {
-                if (!notificationBtn.contains(e.target)) {
-                    dropdown.remove();
-                }
-            });
-        }, 100);
-
-        // Close button functionality
-        dropdown.querySelector('.close-notifications').addEventListener('click', () => {
-            dropdown.remove();
-        });
-    }
-
-    showMessage(message, type) {
-        // Create message element
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `dashboard-message ${type}`;
-        messageDiv.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-        `;
-
-        // Add styles
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideIn 0.3s ease;
-            ${type === 'success' ? 'background: #28a745;' : 'background: #17a2b8;'}
-        `;
-
-        document.body.appendChild(messageDiv);
-
-        // Remove after 3 seconds
-        setTimeout(() => {
-            messageDiv.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.parentNode.removeChild(messageDiv);
-                }
-            }, 300);
-        }, 3000);
-    }
-}
-
-// Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new Dashboard();
-});
-
-// Add notification styles
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    .notification-header {
-        padding: 15px 20px;
-        border-bottom: 1px solid #e0e0e0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .notification-header h4 {
-        margin: 0;
-        color: #333;
-        font-size: 16px;
-    }
-
-    .close-notifications {
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        color: #666;
-    }
-
-    .notification-list {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    .notification-item {
-        padding: 15px 20px;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-    }
-
-    .notification-item:last-child {
-        border-bottom: none;
-    }
-
-    .notification-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .notification-item.success .notification-icon {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .notification-item.info .notification-icon {
-        background: #d1ecf1;
-        color: #0c5460;
-    }
-
-    .notification-content {
-        flex: 1;
-    }
-
-    .notification-content h5 {
-        margin: 0 0 5px 0;
-        color: #333;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .notification-content p {
-        margin: 0 0 5px 0;
-        color: #666;
-        font-size: 13px;
-        line-height: 1.4;
-    }
-
-    .notification-time {
-        font-size: 12px;
-        color: #999;
-    }
-`;
-document.head.appendChild(notificationStyles);
-
+            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`
