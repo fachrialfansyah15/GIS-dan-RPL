@@ -2157,10 +2157,11 @@ body {
     .map-legend {
         left: 12px;
         right: auto;
-        bottom: 12px;
-        margin-top: 60px;
+        top: auto !important;
+        bottom: calc(16px + env(safe-area-inset-bottom));
         z-index: 6000; /* above backdrops/overlays */
         pointer-events: auto;
+        max-width: calc(100% - 24px);
     }
 }
 
