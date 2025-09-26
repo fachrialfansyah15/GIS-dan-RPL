@@ -315,6 +315,7 @@ body {
     left: 16px;
     top: 8px;
     z-index: 2100;
+    pointer-events: auto;
 }
 .hamburger:active, .hamburger:focus {
     background: #f0f0f0;
@@ -793,7 +794,7 @@ body {
         position: absolute;
         left: 16px;
         top: 12px;
-        z-index: 2100;
+        z-index: 4000;
         background: none;
         color: #667eea;
         border: none;
@@ -2096,14 +2097,16 @@ body {
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(102,126,234,0.18);
     padding: 16px 0;
-    z-index: 3000;
+    z-index: 5000;
     flex-direction: column;
     min-width: 180px;
     gap: 0;
     animation: fadeIn 0.2s;
+    pointer-events: none;
 }
 .quick-actions-menu.open {
     display: flex;
+    pointer-events: auto;
 }
 .quick-action-item {
     display: flex;
@@ -2140,4 +2143,3 @@ body {
     .sidebar { display: flex !important; }
     .logo .desktop-logo { display: inline-block; }
 }
-
