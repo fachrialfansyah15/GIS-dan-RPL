@@ -9,6 +9,7 @@ class ReportsPage {
         this.checkAuth();
         this.setupEventListeners();
         this.loadReports();
+        this.setupMobileNav();
     }
 
     checkAuth() {
@@ -200,6 +201,52 @@ class ReportsPage {
                 }
             }, 300);
         }, 3000);
+    }
+
+    setupMobileNav() {
+        const quickToggle = document.getElementById('quickActionsToggle');
+        const quickMenu = document.getElementById('quickActionsMenu');
+        const backdrop = document.getElementById('quickActionsBackdrop');
+        if (quickToggle && quickMenu && backdrop) {
+            const openMenu = () => {
+                quickMenu.classList.add('open');
+                backdrop.classList.add('show');
+                quickToggle.setAttribute('aria-expanded', 'true');
+            };
+            const closeMenu = () => {
+                quickMenu.classList.remove('open');
+                backdrop.classList.remove('show');
+                quickToggle.setAttribute('aria-expanded', 'false');
+            };
+            const toggleMenu = (e) => {
+                e.stopPropagation();
+                if (quickMenu.classList.contains('open')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            };
+            quickToggle.addEventListener('click', toggleMenu);
+            quickToggle.addEventListener('touchstart', toggleMenu, { passive: true });
+            quickMenu.addEventListener('click', (e) => e.stopPropagation());
+            quickMenu.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+            backdrop.addEventListener('click', closeMenu);
+            backdrop.addEventListener('touchstart', closeMenu, { passive: true });
+            document.addEventListener('click', (e) => {
+                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
+                    closeMenu();
+                }
+            });
+            document.addEventListener('touchstart', (e) => {
+                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
+                    closeMenu();
+                }
+            }, { passive: true });
+            quickMenu.querySelectorAll('.quick-action-item').forEach(link => {
+                link.addEventListener('click', closeMenu);
+                link.addEventListener('touchstart', closeMenu, { passive: true });
+            });
+        }
     }
 }
 

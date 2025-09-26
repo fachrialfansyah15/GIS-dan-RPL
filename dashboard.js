@@ -298,4 +298,12 @@ class Dashboard {
 
         const area = areas[areaIndex];
         if (area) {
-            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`
+            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`);
+        }
+    }
+}
+
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new Dashboard();
+});

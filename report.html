@@ -13,8 +13,11 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
+                <button class="hamburger" id="quickActionsToggle" aria-label="Open quick actions">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="logo">
-                    <i class="fas fa-road"></i>
+                    <i class="fas fa-bars desktop-logo"></i>
                     <span>Road Monitor Palu</span>
                 </div>
             </div>
@@ -45,11 +48,18 @@
             </div>
         </header>
 
+        <!-- Quick Actions Floating Menu (mobile only) -->
+        <div class="quick-actions-menu" id="quickActionsMenu">
+            <a href="report.html" class="quick-action-item"><i class="fas fa-plus-circle"></i><span>Report</span></a>
+            <a href="map.html" class="quick-action-item"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
+            <a href="reports.html" class="quick-action-item"><i class="fas fa-list-alt"></i><span>Reports</span></a>
+            <a href="#" class="quick-action-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+        </div>
+        <div class="quick-actions-backdrop" id="quickActionsBackdrop"></div>
+
         <!-- Navigation -->
         <nav class="navigation" id="mainNav">
-            <button class="hamburger" id="navToggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
+            
             <div class="nav-container">
                 <a href="dashboard.html" class="nav-item">
                     <i class="fas fa-tachometer-alt"></i>
