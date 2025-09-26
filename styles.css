@@ -2247,6 +2247,8 @@ body {
     .hamburger { display: none !important; }
     .quick-actions-menu, .quick-actions-backdrop { display: none !important; }
     .navigation, .nav-container { display: block !important; }
+    /* Hide mobile nav sidebar on desktop */
+    #sidebarNav { display: none !important; }
     /* Hide Tools dropdown on desktop */
     .tools-dropdown { display: none !important; }
 }
@@ -2258,3 +2260,36 @@ body {
     /* Show Tools dropdown on mobile */
     .tools-dropdown { display: inline-block !important; }
 }
+
+/* Quick Actions layout (mobile) */
+.quick-actions-menu {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 12px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 8px 10px;
+    z-index: 5000;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+    max-width: calc(100% - 24px);
+}
+.quick-actions-menu.open { display: flex; }
+.quick-action-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    color: #667eea;
+    font-size: 14px;
+    text-decoration: none;
+    border: 1px solid #eef0ff;
+    background: #f9faff;
+    border-radius: 8px;
+}
+.quick-action-item i { font-size: 18px; }
+.quick-action-item:hover { background: #f0f3ff; color: #5a6fd8; }
