@@ -104,6 +104,28 @@ class RoadMonitorMap {
             this.locateUser();
         });
 
+        // Tools dropdown (desktop)
+        const toolsToggle = document.getElementById('toolsToggle');
+        const toolsMenu = document.getElementById('toolsMenu');
+        if (toolsToggle && toolsMenu) {
+            toolsToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toolsMenu.classList.toggle('open');
+            });
+            document.addEventListener('click', (e) => {
+                if (toolsMenu.classList.contains('open') && !toolsMenu.contains(e.target) && e.target !== toolsToggle) {
+                    toolsMenu.classList.remove('open');
+                }
+            });
+            toolsMenu.querySelectorAll('button[data-tool]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tool = e.currentTarget.getAttribute('data-tool');
+                    this.setActiveTool(tool);
+                    toolsMenu.classList.remove('open');
+                });
+            });
+        }
+
         // Modal controls
         const modal = document.getElementById('reportModal');
         const closeBtn = document.querySelector('.close');

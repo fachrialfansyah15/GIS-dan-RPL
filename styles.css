@@ -2151,3 +2151,63 @@ body {
 .quick-actions-backdrop.show {
     display: block;
 }
+
+/* Map legend left on mobile with spacing from header */
+@media (max-width: 900px) {
+    .map-legend {
+        left: 12px;
+        right: auto;
+        bottom: 12px;
+        margin-top: 60px;
+    }
+}
+
+/* Tools dropdown (desktop) */
+.tools-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.tools-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #666;
+}
+.tools-toggle i {
+    color: #667eea;
+}
+.tools-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    min-width: 180px;
+    padding: 8px 0;
+    display: none;
+    z-index: 2500;
+}
+.tools-menu.open { display: block; }
+.tools-menu a, .tools-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    color: #333;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+.tools-menu a:hover, .tools-menu button:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}

@@ -54,6 +54,7 @@
             <a href="report.html" class="quick-action-item"><i class="fas fa-plus-circle"></i><span>Report</span></a>
             <a href="map.html" class="quick-action-item"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
             <a href="reports.html" class="quick-action-item"><i class="fas fa-list-alt"></i><span>Reports</span></a>
+            <a href="about.html" class="quick-action-item"><i class="fas fa-info-circle"></i><span>About</span></a>
             <a href="#" class="quick-action-item"><i class="fas fa-cog"></i><span>Settings</span></a>
         </div>
         <div class="quick-actions-backdrop" id="quickActionsBackdrop"></div>
@@ -177,6 +178,17 @@
                 
                 <!-- Map Controls -->
                 <div class="map-controls">
+                    <div class="tools-dropdown" id="toolsDropdown">
+                        <button class="tools-toggle" id="toolsToggle">
+                            <i class="fas fa-wrench"></i>
+                            <span>Tools</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="tools-menu" id="toolsMenu">
+                            <button data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
+                            <button data-tool="measure"><i class="fas fa-ruler"></i><span>Measure</span></button>
+                        </div>
+                    </div>
                     <button class="map-control-btn" id="zoomIn" title="Zoom In">
                         <i class="fas fa-plus"></i>
                     </button>
