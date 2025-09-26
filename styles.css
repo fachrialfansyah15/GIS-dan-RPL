@@ -2102,7 +2102,6 @@ body {
     min-width: 180px;
     gap: 0;
     animation: fadeIn 0.2s;
-    pointer-events: none;
 }
 .quick-actions-menu.open {
     display: flex;
@@ -2142,4 +2141,15 @@ body {
     .hamburger { display: none !important; }
     .sidebar { display: flex !important; }
     .logo .desktop-logo { display: inline-block; }
+}
+
+.header, .header-left {
+    z-index: 1000;
+}
+.hamburger {
+    z-index: 4000;
+    pointer-events: auto;
+}
+.quick-actions-menu {
+    z-index: 5000;
 }
