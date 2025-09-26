@@ -2152,6 +2152,48 @@ body {
     display: block;
 }
 
+/* Persistent Quick Actions Bar (mobile) */
+.quick-actions-bar {
+    display: none;
+    position: sticky;
+    top: 60px;
+    z-index: 1200;
+    background: #ffffff;
+    border-bottom: 1px solid #eee;
+    padding: 8px 12px;
+}
+.quick-actions-bar .qa-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.quick-actions-bar .qa-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    color: #667eea;
+    background: #f9faff;
+    border: 1px solid #eef0ff;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    font-size: 14px;
+}
+.quick-actions-bar .qa-link i { font-size: 18px; }
+.quick-actions-bar .qa-link.active { background: #eef1ff; color: #5a6fd8; }
+
+@media (max-width: 900px) {
+    .quick-actions-bar { display: block; }
+    /* hide floating quick actions menu if bar exists */
+    .quick-actions-menu, .quick-actions-backdrop { display: none !important; }
+}
+@media (min-width: 901px) {
+    .quick-actions-bar { display: none !important; }
+}
+
 /* Map legend left on mobile with spacing from header */
 @media (max-width: 900px) {
     .map-legend {
@@ -2246,11 +2288,17 @@ body {
 @media (min-width: 901px) {
     .hamburger { display: none !important; }
     .quick-actions-menu, .quick-actions-backdrop { display: none !important; }
-    .navigation, .nav-container { display: block !important; }
-    /* Hide mobile nav sidebar on desktop */
-    #sidebarNav { display: none !important; }
-    /* Hide Tools dropdown on desktop */
-    .tools-dropdown { display: none !important; }
+    /* Show desktop navigation */
+    .navigation { display: block !important; }
+    .nav-container { display: flex !important; flex-direction: row; align-items: center; gap: 0; }
+    /* Force-hide mobile sidebar on desktop */
+    nav.sidebar#sidebarNav { display: none !important; visibility: hidden !important; }
+    /* Hide quick actions bar on desktop */
+    .quick-actions-bar { display: none !important; }
+    /* Ensure road icon remains visible on desktop */
+    .logo i.fas.fa-road { display: inline-block !important; }
+    /* If a .desktop-logo exists (bars), keep it hidden */
+    .logo .desktop-logo { display: none !important; }
 }
 
 /* Mobile visibility rules */
