@@ -140,6 +140,8 @@ class Dashboard {
         const quickMenu = document.getElementById('quickActionsMenu');
         if (quickToggle && quickMenu) {
             quickToggle.addEventListener('click', (e) => {
+                alert('Hamburger clicked!');
+                console.log('Hamburger clicked!');
                 e.stopPropagation();
                 quickMenu.classList.toggle('open');
             });
