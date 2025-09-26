@@ -2341,3 +2341,33 @@ body {
 }
 .quick-action-item i { font-size: 18px; }
 .quick-action-item:hover { background: #f0f3ff; color: #5a6fd8; }
+
+/* Password field with toggle */
+.password-field {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.password-field input[type="password"],
+.password-field input[type="text"] {
+    width: 100%;
+    padding-right: 44px;
+}
+.toggle-password {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #667eea;
+}
+.toggle-password:hover { background: #f0f3ff; }
+.toggle-password i { font-size: 16px; }
