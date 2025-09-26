@@ -138,23 +138,53 @@ class Dashboard {
         // Quick Actions floating menu for mobile
         const quickToggle = document.getElementById('quickActionsToggle');
         const quickMenu = document.getElementById('quickActionsMenu');
-        if (quickToggle && quickMenu) {
-            quickToggle.addEventListener('click', (e) => {
-                alert('Hamburger clicked!');
-                console.log('Hamburger clicked!');
+        const backdrop = document.getElementById('quickActionsBackdrop');
+        if (quickToggle && quickMenu && backdrop) {
+            const openMenu = () => {
+                quickMenu.classList.add('open');
+                backdrop.classList.add('show');
+                quickToggle.setAttribute('aria-expanded', 'true');
+            };
+            const closeMenu = () => {
+                quickMenu.classList.remove('open');
+                backdrop.classList.remove('show');
+                quickToggle.setAttribute('aria-expanded', 'false');
+            };
+            const toggleMenu = (e) => {
                 e.stopPropagation();
-                quickMenu.classList.toggle('open');
-            });
-            // Close menu when clicking outside or on a quick action
+                if (quickMenu.classList.contains('open')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            };
+
+            // Open/close via click and touchstart
+            quickToggle.addEventListener('click', toggleMenu);
+            quickToggle.addEventListener('touchstart', toggleMenu, { passive: true });
+
+            // Prevent clicks inside the menu from bubbling to document
+            quickMenu.addEventListener('click', (e) => e.stopPropagation());
+            quickMenu.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+            // Close on backdrop or outside click
+            backdrop.addEventListener('click', closeMenu);
+            backdrop.addEventListener('touchstart', closeMenu, { passive: true });
             document.addEventListener('click', (e) => {
-                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && e.target !== quickToggle) {
-                    quickMenu.classList.remove('open');
+                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
+                    closeMenu();
                 }
             });
+            document.addEventListener('touchstart', (e) => {
+                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
+                    closeMenu();
+                }
+            }, { passive: true });
+
+            // Close menu on item click
             quickMenu.querySelectorAll('.quick-action-item').forEach(link => {
-                link.addEventListener('click', () => {
-                    quickMenu.classList.remove('open');
-                });
+                link.addEventListener('click', closeMenu);
+                link.addEventListener('touchstart', closeMenu, { passive: true });
             });
         }
     }

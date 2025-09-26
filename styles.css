@@ -2139,3 +2139,15 @@ body {
 .quick-actions-menu {
     z-index: 5000;
 }
+
+/* Quick Actions Backdrop */
+.quick-actions-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.2);
+    z-index: 4000;
+}
+.quick-actions-backdrop.show {
+    display: block;
+}
