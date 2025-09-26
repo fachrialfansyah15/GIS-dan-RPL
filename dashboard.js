@@ -159,32 +159,23 @@ class Dashboard {
                 }
             };
 
-            // Open/close via click and touchstart
+            // Open/close via click only
             quickToggle.addEventListener('click', toggleMenu);
-            quickToggle.addEventListener('touchstart', toggleMenu, { passive: true });
 
             // Prevent clicks inside the menu from bubbling to document
             quickMenu.addEventListener('click', (e) => e.stopPropagation());
-            quickMenu.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
             // Close on backdrop or outside click
             backdrop.addEventListener('click', closeMenu);
-            backdrop.addEventListener('touchstart', closeMenu, { passive: true });
             document.addEventListener('click', (e) => {
                 if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
                     closeMenu();
                 }
             });
-            document.addEventListener('touchstart', (e) => {
-                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
-                    closeMenu();
-                }
-            }, { passive: true });
 
             // Close menu on item click
             quickMenu.querySelectorAll('.quick-action-item').forEach(link => {
                 link.addEventListener('click', closeMenu);
-                link.addEventListener('touchstart', closeMenu, { passive: true });
             });
         }
     }
@@ -298,12 +289,4 @@ class Dashboard {
 
         const area = areas[areaIndex];
         if (area) {
-            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`);
-        }
-    }
-}
-
-// Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new Dashboard();
-});
+            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`

@@ -95,24 +95,15 @@ class AboutPage {
                 }
             };
             quickToggle.addEventListener('click', toggleMenu);
-            quickToggle.addEventListener('touchstart', toggleMenu, { passive: true });
             quickMenu.addEventListener('click', (e) => e.stopPropagation());
-            quickMenu.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
             backdrop.addEventListener('click', closeMenu);
-            backdrop.addEventListener('touchstart', closeMenu, { passive: true });
             document.addEventListener('click', (e) => {
                 if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
                     closeMenu();
                 }
             });
-            document.addEventListener('touchstart', (e) => {
-                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
-                    closeMenu();
-                }
-            }, { passive: true });
             quickMenu.querySelectorAll('.quick-action-item').forEach(link => {
                 link.addEventListener('click', closeMenu);
-                link.addEventListener('touchstart', closeMenu, { passive: true });
             });
         }
     }
