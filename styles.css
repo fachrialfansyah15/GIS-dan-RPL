@@ -2245,13 +2245,16 @@ body {
 /* Desktop visibility rules */
 @media (min-width: 901px) {
     .hamburger { display: none !important; }
-    .quick-actions-menu { display: none !important; }
-    .quick-actions-backdrop { display: none !important; }
+    .quick-actions-menu, .quick-actions-backdrop { display: none !important; }
     .navigation, .nav-container { display: block !important; }
+    /* Hide Tools dropdown on desktop */
+    .tools-dropdown { display: none !important; }
 }
 
 /* Mobile visibility rules */
 @media (max-width: 900px) {
     .navigation, .nav-container { display: none !important; }
     .hamburger { display: flex !important; }
+    /* Show Tools dropdown on mobile */
+    .tools-dropdown { display: inline-block !important; }
 }
