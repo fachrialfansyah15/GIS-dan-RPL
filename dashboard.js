@@ -135,24 +135,23 @@ class Dashboard {
     }
 
     setupMobileNav() {
-        // Sidebar toggle for mobile
-        const sidebar = document.getElementById('sidebarNav');
-        const toggle = document.getElementById('sidebarToggle');
-        if (sidebar && toggle) {
-            toggle.addEventListener('click', (e) => {
+        // Quick Actions floating menu for mobile
+        const quickToggle = document.getElementById('quickActionsToggle');
+        const quickMenu = document.getElementById('quickActionsMenu');
+        if (quickToggle && quickMenu) {
+            quickToggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                sidebar.classList.toggle('open');
+                quickMenu.classList.toggle('open');
             });
-            // Close sidebar when clicking outside or on a nav link
+            // Close menu when clicking outside or on a quick action
             document.addEventListener('click', (e) => {
-                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle) {
-                    sidebar.classList.remove('open');
+                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && e.target !== quickToggle) {
+                    quickMenu.classList.remove('open');
                 }
             });
-            // Close sidebar on nav link click
-            sidebar.querySelectorAll('.nav-item').forEach(link => {
+            quickMenu.querySelectorAll('.quick-action-item').forEach(link => {
                 link.addEventListener('click', () => {
-                    sidebar.classList.remove('open');
+                    quickMenu.classList.remove('open');
                 });
             });
         }

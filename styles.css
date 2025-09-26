@@ -300,19 +300,27 @@ body {
 /* Mobile hamburger */
 .hamburger {
     display: none;
-    background: rgba(255,255,255,0.2);
+    background: white;
     border: none;
-    color: white;
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    cursor: pointer;
+    color: #667eea;
+    font-size: 28px;
     align-items: center;
     justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.10);
+    transition: background 0.2s, color 0.2s;
+    position: absolute;
+    left: 16px;
+    top: 8px;
+    z-index: 2100;
 }
-
+.hamburger:active, .hamburger:focus {
+    background: #f0f0f0;
+}
 .hamburger i {
-    font-size: 18px;
+    color: #667eea;
 }
 
 .nav-item {
@@ -356,16 +364,29 @@ body {
     z-index: 1000;
 }
 
-.header-left .logo {
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+.logo {
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 18px;
     font-weight: 600;
 }
-
-.header-left .logo i {
-    font-size: 24px;
+.logo .desktop-logo {
+    display: none;
+}
+@media (min-width: 900px) {
+    .logo .desktop-logo {
+        display: inline-block;
+        font-size: 24px;
+        color: #fff;
+    }
+    .logo i.fas.fa-road { display: none; }
 }
 
 .header-center h1 {
@@ -2063,5 +2084,60 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Quick Actions Floating Menu (mobile only) */
+.quick-actions-menu {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(102,126,234,0.18);
+    padding: 16px 0;
+    z-index: 3000;
+    flex-direction: column;
+    min-width: 180px;
+    gap: 0;
+    animation: fadeIn 0.2s;
+}
+.quick-actions-menu.open {
+    display: flex;
+}
+.quick-action-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    color: #667eea;
+    font-size: 16px;
+    text-decoration: none;
+    border: none;
+    background: none;
+    transition: background 0.2s, color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+.quick-action-item:last-child {
+    border-bottom: none;
+}
+.quick-action-item i {
+    font-size: 20px;
+}
+.quick-action-item:hover {
+    background: #f8f9fa;
+    color: #764ba2;
+}
+@media (max-width: 900px) {
+    .quick-actions-menu { display: none; }
+    .quick-actions-menu.open { display: flex; }
+    .sidebar { display: none !important; }
+    .logo .desktop-logo { display: none; }
+}
+@media (min-width: 900px) {
+    .quick-actions-menu { display: none !important; }
+    .hamburger { display: none !important; }
+    .sidebar { display: flex !important; }
+    .logo .desktop-logo { display: inline-block; }
 }
 
