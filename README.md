@@ -25,7 +25,7 @@ Repository ini berisi project integrasi **Sistem Informasi Geografis (GIS)** den
 ### Langkah Instalasi
 ```bash
 # Clone repository
-git clone https://github.com/username/GIS-dan-RPL.git
+git clone https://github.com/fachrialfansyah15/GIS-dan-RPL.git
 cd GIS-dan-RPL
 
 # Install dependencies
