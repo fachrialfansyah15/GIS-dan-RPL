@@ -2214,3 +2214,30 @@ body {
     background: #f8f9fa;
     color: #667eea;
 }
+
+/* Legend visibility rules */
+@media (max-width: 900px) {
+    .map-legend { display: none; }
+    .tools-menu .mobile-only { display: block; }
+}
+@media (min-width: 901px) {
+    .tools-menu .mobile-only { display: none; }
+}
+
+/* Tools menu sections */
+.tools-menu .tools-section { padding: 6px 0; }
+.tools-menu .tools-section + .tools-section { border-top: 1px solid #f0f0f0; }
+.tools-menu .tools-section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+    padding: 8px 14px;
+}
+.tools-menu .tools-legend-items {
+    padding: 4px 14px 8px 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+}
+.tools-menu .tools-legend-items .legend-item { margin: 0; }

@@ -185,8 +185,20 @@
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="tools-menu" id="toolsMenu">
-                            <button data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
-                            <button data-tool="measure"><i class="fas fa-ruler"></i><span>Measure</span></button>
+                            <div class="tools-section">
+                                <div class="tools-section-title">Tools</div>
+                                <button data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
+                                <button data-tool="measure"><i class="fas fa-ruler"></i><span>Measure</span></button>
+                            </div>
+                            <div class="tools-section mobile-only" id="toolsLegend">
+                                <div class="tools-section-title">Legend</div>
+                                <div class="tools-legend-items">
+                                    <div class="legend-item"><div class="legend-color high"></div><span>High Priority</span></div>
+                                    <div class="legend-item"><div class="legend-color medium"></div><span>Medium Priority</span></div>
+                                    <div class="legend-item"><div class="legend-color low"></div><span>Low Priority</span></div>
+                                    <div class="legend-item"><div class="legend-color completed"></div><span>Completed</span></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <button class="map-control-btn" id="zoomIn" title="Zoom In">
