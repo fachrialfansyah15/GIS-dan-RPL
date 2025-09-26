@@ -2241,3 +2241,17 @@ body {
     gap: 6px;
 }
 .tools-menu .tools-legend-items .legend-item { margin: 0; }
+
+/* Desktop visibility rules */
+@media (min-width: 901px) {
+    .hamburger { display: none !important; }
+    .quick-actions-menu { display: none !important; }
+    .quick-actions-backdrop { display: none !important; }
+    .navigation, .nav-container { display: block !important; }
+}
+
+/* Mobile visibility rules */
+@media (max-width: 900px) {
+    .navigation, .nav-container { display: none !important; }
+    .hamburger { display: flex !important; }
+}
