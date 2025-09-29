@@ -2391,6 +2391,23 @@ body {
 
     /* Sembunyikan quick actions bar gaya desktop di mobile */
     .quick-actions-bar { display: none !important; }
-    .quick-actions-bar { display: none !important; }          /* sembunyikan bar desktop di mobile */
+    .quick-actions-backdrop { display: none !important; }          /* sembunyikan bar desktop di mobile */
     .quick-actions-menu.open { display: flex !important; }    /* pastikan menu overlay muncul */
+}
+
+/* Mobile overrides: hamburger inline + enable overlay, hide desktop quick-actions bar */
+@media (max-width: 900px) {
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .hamburger {
+        position: static !important;
+        margin-right: 6px;
+        z-index: 3000;
+        pointer-events: auto;
+        background: #ffffff;
+        width: 40px; height: 40px; border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .quick-actions-bar { display: none !important; }
+    .quick-actions-menu.open { display: flex !important; }
+    .quick-actions-backdrop.show { display: block !important; }
 }
