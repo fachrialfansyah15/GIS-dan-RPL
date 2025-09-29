@@ -2371,3 +2371,24 @@ body {
 }
 .toggle-password:hover { background: #f0f3ff; }
 .toggle-password i { font-size: 16px; }
+@media (max-width: 900px) {
+    /* Susun hamburger di sebelah judul */
+    .header-left { display: flex; align-items: center; gap: 8px; }
+
+    .hamburger {
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        margin: 0 6px 0 0;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        width: 40px; height: 40px; border-radius: 8px;
+    }
+
+    /* Sembunyikan quick actions bar gaya desktop di mobile */
+    .quick-actions-bar { display: none !important; }
+
+    /* Pastikan menu hamburger bisa tampil */
+    .quick-actions-menu.open { display: flex !important; }
+    .quick-actions-backdrop.show { display: block !important; }
+}
