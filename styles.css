@@ -2377,9 +2377,9 @@ body {
 
     .hamburger {
         display: flex !important;
-        position: static;            
+        position: static;             /* inline di sebelah judul */
         margin-right: 6px;
-        z-index: 3000;              
+        z-index: 3000;                /* pastikan bisa diklik */
         background: #ffffff;
         color: #667eea;
         border: none;
@@ -2391,8 +2391,6 @@ body {
 
     /* Sembunyikan quick actions bar gaya desktop di mobile */
     .quick-actions-bar { display: none !important; }
-
-    /* Pastikan menu hamburger bisa tampil */
-    .quick-actions-menu.open { display: flex !important; }
-    .quick-actions-backdrop.show { display: block !important; }
+    .quick-actions-bar { display: none !important; }          /* sembunyikan bar desktop di mobile */
+    .quick-actions-menu.open { display: flex !important; }    /* pastikan menu overlay muncul */
 }
