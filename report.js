@@ -145,6 +145,7 @@ class ReportForm {
                 quickToggle.setAttribute('aria-expanded', 'false');
             };
             const toggleMenu = (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 if (quickMenu.classList.contains('open')) {
                     closeMenu();
@@ -152,6 +153,7 @@ class ReportForm {
                     openMenu();
                 }
             };
+            quickToggle.addEventListener('pointerdown', toggleMenu);
             quickToggle.addEventListener('click', toggleMenu);
             quickMenu.addEventListener('click', (e) => e.stopPropagation());
             backdrop.addEventListener('click', closeMenu);

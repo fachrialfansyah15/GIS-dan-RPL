@@ -151,6 +151,7 @@ class Dashboard {
                 quickToggle.setAttribute('aria-expanded', 'false');
             };
             const toggleMenu = (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 if (quickMenu.classList.contains('open')) {
                     closeMenu();
@@ -159,7 +160,8 @@ class Dashboard {
                 }
             };
 
-            // Open/close via click only
+            // Bind robustly for mobile interactions
+            quickToggle.addEventListener('pointerdown', toggleMenu);
             quickToggle.addEventListener('click', toggleMenu);
 
             // Prevent clicks inside the menu from bubbling to document
