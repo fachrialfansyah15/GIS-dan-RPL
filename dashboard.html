@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Road Monitor Palu</title>
+    <title>Dashboard - SIPATUJU</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -18,11 +18,11 @@
                 </button>
                 <div class="logo">
                     <i class="fas fa-bars desktop-logo"></i>
-                    <span>Road Monitor Palu</span>
+                    <span>SIPATUJU</span>
                 </div>
             </div>
             <div class="header-center">
-                <h1>Dashboard - Road Damage Reports</h1>
+                <h1>Dashboard - Laporan Kerusakan Jalan</h1>
             </div>
             <div class="header-right">
                 <div class="user-controls">
@@ -52,21 +52,21 @@
         <nav class="navigation">
             <div class="nav-container">
                 <a href="dashboard.html" class="nav-item active"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                <a href="map.html" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Map View</span></a>
-                <a href="report.html" class="nav-item"><i class="fas fa-plus-circle"></i><span>Report Damage</span></a>
-                <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>All Reports</span></a>
-                <a href="about.html" class="nav-item"><i class="fas fa-info-circle"></i><span>About</span></a>
+                <a href="map.html" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Tampilan Peta</span></a>
+                <a href="report.html" class="nav-item"><i class="fas fa-plus-circle"></i><span>Lapor Kerusakan</span></a>
+                <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Semua Laporan</span></a>
+                <a href="about.html" class="nav-item"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
             </div>
         </nav>
 
         <!-- Quick Actions Floating Menu (mobile only) -->
         <div class="quick-actions-menu" id="quickActionsMenu">
             <a href="dashboard.html" class="quick-action-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-            <a href="report.html" class="quick-action-item"><i class="fas fa-plus-circle"></i><span>Report</span></a>
-            <a href="map.html" class="quick-action-item"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
-            <a href="reports.html" class="quick-action-item"><i class="fas fa-list-alt"></i><span>Reports</span></a>
-            <a href="about.html" class="quick-action-item"><i class="fas fa-info-circle"></i><span>About</span></a>
-            <a href="#" class="quick-action-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+            <a href="report.html" class="quick-action-item"><i class="fas fa-plus-circle"></i><span>Lapor</span></a>
+            <a href="map.html" class="quick-action-item"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+            <a href="reports.html" class="quick-action-item"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+            <a href="about.html" class="quick-action-item"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
+            <a href="#" class="quick-action-item"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
         </div>
         <div class="quick-actions-backdrop" id="quickActionsBackdrop"></div>
 
@@ -74,19 +74,19 @@
         <div class="quick-actions-bar">
             <div class="qa-container">
                 <a class="qa-link active" href="dashboard.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                <a class="qa-link" href="map.html"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
-                <a class="qa-link" href="report.html"><i class="fas fa-plus-circle"></i><span>Report</span></a>
-                <a class="qa-link" href="reports.html"><i class="fas fa-list-alt"></i><span>Reports</span></a>
-                <a class="qa-link" href="about.html"><i class="fas fa-info-circle"></i><span>About</span></a>
+                <a class="qa-link" href="map.html"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+                <a class="qa-link" href="report.html"><i class="fas fa-plus-circle"></i><span>Lapor</span></a>
+                <a class="qa-link" href="reports.html"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+                <a class="qa-link" href="about.html"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
             </div>
         </div>
 
         <!-- Sidebar Navigation -->
         <nav class="sidebar" id="sidebarNav">
             <a href="dashboard.html" class="nav-item active"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-            <a href="map.html" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
-            <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Reports</span></a>
-            <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+            <a href="map.html" class="nav-item"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+            <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+            <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
         </nav>
 
         <!-- Main Content -->
@@ -99,8 +99,8 @@
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">24</div>
-                        <div class="stat-label">Active Reports</div>
-                        <div class="stat-change positive">+3 this week</div>
+                        <div class="stat-label">Laporan Aktif</div>
+                        <div class="stat-change positive">+3 minggu ini</div>
                     </div>
                 </div>
                 
@@ -110,8 +110,8 @@
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">8</div>
-                        <div class="stat-label">In Progress</div>
-                        <div class="stat-change positive">+2 this week</div>
+                        <div class="stat-label">Sedang Diproses</div>
+                        <div class="stat-change positive">+2 minggu ini</div>
                     </div>
                 </div>
                 
@@ -121,8 +121,8 @@
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">156</div>
-                        <div class="stat-label">Completed</div>
-                        <div class="stat-change positive">+12 this week</div>
+                        <div class="stat-label">Selesai</div>
+                        <div class="stat-change positive">+12 minggu ini</div>
                     </div>
                 </div>
                 
@@ -132,8 +132,8 @@
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">2.3</div>
-                        <div class="stat-label">Avg. Response (days)</div>
-                        <div class="stat-change negative">+0.2 days</div>
+                        <div class="stat-label">Rata-rata Respons (hari)</div>
+                        <div class="stat-change negative">+0.2 hari</div>
                     </div>
                 </div>
             </div>
@@ -143,8 +143,8 @@
                 <!-- Recent Reports -->
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3>Recent Reports</h3>
-                        <a href="reports.html" class="view-all">View All</a>
+                        <h3>Laporan Terbaru</h3>
+                        <a href="reports.html" class="view-all">Lihat Semua</a>
                     </div>
                     <div class="card-content">
                         <div class="report-list">
@@ -153,11 +153,11 @@
                                     <i class="fas fa-exclamation-triangle"></i>
                                 </div>
                                 <div class="report-details">
-                                    <h4>Pothole on Jl. Sudirman</h4>
-                                    <p>Large pothole causing traffic disruption</p>
-                                    <span class="report-meta">Reported 2 hours ago by John Doe</span>
+                                    <h4>Lubang di Jl. Sudirman</h4>
+                                    <p>Lubang besar yang mengganggu lalu lintas</p>
+                                    <span class="report-meta">Dilaporkan 2 jam lalu oleh John Doe</span>
                                 </div>
-                                <div class="report-status high">High Priority</div>
+                                <div class="report-status high">Prioritas Tinggi</div>
                             </div>
                             
                             <div class="report-item">
@@ -165,11 +165,11 @@
                                     <i class="fas fa-road"></i>
                                 </div>
                                 <div class="report-details">
-                                    <h4>Cracked Road Surface</h4>
-                                    <p>Multiple cracks on Jl. Ahmad Yani</p>
-                                    <span class="report-meta">Reported 5 hours ago by Jane Smith</span>
+                                    <h4>Permukaan Jalan Retak</h4>
+                                    <p>Banyak retakan di Jl. Ahmad Yani</p>
+                                    <span class="report-meta">Dilaporkan 5 jam lalu oleh Jane Smith</span>
                                 </div>
-                                <div class="report-status medium">Medium Priority</div>
+                                <div class="report-status medium">Prioritas Sedang</div>
                             </div>
                             
                             <div class="report-item">
@@ -177,11 +177,11 @@
                                     <i class="fas fa-sign"></i>
                                 </div>
                                 <div class="report-details">
-                                    <h4>Missing Road Sign</h4>
-                                    <p>Stop sign missing at intersection</p>
-                                    <span class="report-meta">Reported 1 day ago by Mike Johnson</span>
+                                    <h4>Rambu Jalan Hilang</h4>
+                                    <p>Rambu stop hilang di persimpangan</p>
+                                    <span class="report-meta">Dilaporkan 1 hari lalu oleh Mike Johnson</span>
                                 </div>
-                                <div class="report-status low">Low Priority</div>
+                                <div class="report-status low">Prioritas Rendah</div>
                             </div>
                         </div>
                     </div>
@@ -190,8 +190,8 @@
                 <!-- Map Preview -->
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3>Map Overview</h3>
-                        <a href="map.html" class="view-all">View Full Map</a>
+                        <h3>Ringkasan Peta</h3>
+                        <a href="map.html" class="view-all">Lihat Peta Lengkap</a>
                     </div>
                     <div class="card-content">
                         <div id="mapPreview"></div>
@@ -201,7 +201,7 @@
                 <!-- Priority Areas -->
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3>Priority Areas</h3>
+                        <h3>Area Prioritas</h3>
                     </div>
                     <div class="card-content">
                         <div class="priority-list">
@@ -209,21 +209,21 @@
                                 <div class="priority-bar high"></div>
                                 <div class="priority-info">
                                     <h4>Jl. Sudirman</h4>
-                                    <p>5 active reports</p>
+                                    <p>5 laporan aktif</p>
                                 </div>
                             </div>
                             <div class="priority-item">
                                 <div class="priority-bar medium"></div>
                                 <div class="priority-info">
                                     <h4>Jl. Ahmad Yani</h4>
-                                    <p>3 active reports</p>
+                                    <p>3 laporan aktif</p>
                                 </div>
                             </div>
                             <div class="priority-item">
                                 <div class="priority-bar low"></div>
                                 <div class="priority-info">
                                     <h4>Jl. Gatot Subroto</h4>
-                                    <p>2 active reports</p>
+                                    <p>2 laporan aktif</p>
                                 </div>
                             </div>
                         </div>

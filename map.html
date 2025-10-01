@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map View - Road Monitor Palu</title>
+    <title>Tampilan Peta - SIPATUJU</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -18,11 +18,11 @@
                 </button>
                 <div class="logo">
                     <i class="fas fa-bars desktop-logo"></i>
-                    <span>Road Monitor Palu</span>
+                    <span>SIPATUJU</span>
                 </div>
             </div>
             <div class="header-center">
-                <h1>Interactive Map - Palu City</h1>
+                <h1>Peta Interaktif - Kota Palu</h1>
             </div>
             <div class="header-right">
                 <div class="user-controls">
@@ -52,10 +52,10 @@
         <nav class="navigation">
             <div class="nav-container">
                 <a href="dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                <a href="map.html" class="nav-item active"><i class="fas fa-map-marked-alt"></i><span>Map View</span></a>
-                <a href="report.html" class="nav-item"><i class="fas fa-plus-circle"></i><span>Report Damage</span></a>
-                <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>All Reports</span></a>
-                <a href="about.html" class="nav-item"><i class="fas fa-info-circle"></i><span>About</span></a>
+                <a href="map.html" class="nav-item active"><i class="fas fa-map-marked-alt"></i><span>Tampilan Peta</span></a>
+                <a href="report.html" class="nav-item"><i class="fas fa-plus-circle"></i><span>Lapor Kerusakan</span></a>
+                <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Semua Laporan</span></a>
+                <a href="about.html" class="nav-item"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
             </div>
         </nav>
 
@@ -63,10 +63,10 @@
         <div class="quick-actions-bar">
             <div class="qa-container">
                 <a class="qa-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                <a class="qa-link active" href="map.html"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
-                <a class="qa-link" href="report.html"><i class="fas fa-plus-circle"></i><span>Report</span></a>
-                <a class="qa-link" href="reports.html"><i class="fas fa-list-alt"></i><span>Reports</span></a>
-                <a class="qa-link" href="about.html"><i class="fas fa-info-circle"></i><span>About</span></a>
+                <a class="qa-link active" href="map.html"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+                <a class="qa-link" href="report.html"><i class="fas fa-plus-circle"></i><span>Lapor</span></a>
+                <a class="qa-link" href="reports.html"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+                <a class="qa-link" href="about.html"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
             </div>
         </div>
         <div class="quick-actions-backdrop" id="quickActionsBackdrop"></div>
@@ -74,9 +74,9 @@
         <!-- Sidebar Navigation -->
         <nav class="sidebar" id="sidebarNav">
             <a href="dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-            <a href="map.html" class="nav-item active"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
-            <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Reports</span></a>
-            <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>Settings</span></a>
+            <a href="map.html" class="nav-item active"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+            <a href="reports.html" class="nav-item"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+            <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
         </nav>
 
         <!-- Main Content -->
@@ -84,74 +84,74 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-section">
-                    <h3>Map Tools</h3>
+                    <h3>Alat Peta</h3>
                     <div class="tool-group">
                         <button class="tool-btn active" data-tool="select">
                             <i class="fas fa-mouse-pointer"></i>
-                            <span>Select</span>
+                            <span>Pilih</span>
                         </button>
                         <button class="tool-btn" data-tool="measure">
                             <i class="fas fa-ruler"></i>
-                            <span>Measure</span>
+                            <span>Ukur</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>Layers</h3>
+                    <h3>Lapisan</h3>
                     <div class="layer-controls">
                         <div class="layer-item">
                             <input type="checkbox" id="damage" checked>
                             <label for="damage">
                                 <i class="fas fa-exclamation-triangle"></i>
-                                <span>Damage Reports</span>
+                                <span>Laporan Kerusakan</span>
                             </label>
                         </div>
                         <div class="layer-item">
                             <input type="checkbox" id="maintenance">
                             <label for="maintenance">
                                 <i class="fas fa-tools"></i>
-                                <span>Maintenance</span>
+                                <span>Pemeliharaan</span>
                             </label>
                         </div>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>Filters</h3>
+                    <h3>Filter</h3>
                     <div class="filter-controls">
                         <div class="filter-group">
-                            <label>Damage Type</label>
+                            <label>Tipe Kerusakan</label>
                             <select id="damageType">
-                                <option value="all">All Types</option>
-                                <option value="Minor Damage">Minor Damage</option>
-                                <option value="Medium Damage">Medium Damage</option>
-                                <option value="Severe Damage">Severe Damage</option>
+                                <option value="all">Semua Tipe</option>
+                                <option value="Minor Damage">Kerusakan Ringan</option>
+                                <option value="Medium Damage">Kerusakan Sedang</option>
+                                <option value="Severe Damage">Kerusakan Berat</option>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label>Priority</label>
+                            <label>Prioritas</label>
                             <select id="priority">
-                                <option value="all">All Priorities</option>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
+                                <option value="all">Semua Prioritas</option>
+                                <option value="high">Tinggi</option>
+                                <option value="medium">Sedang</option>
+                                <option value="low">Rendah</option>
                             </select>
                         </div>
                         <div class="filter-group">
                             <label>Status</label>
                             <select id="status">
-                                <option value="all">All Status</option>
-                                <option value="reported">Reported</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
+                                <option value="all">Semua Status</option>
+                                <option value="reported">Dilaporkan</option>
+                                <option value="in_progress">Sedang Diproses</option>
+                                <option value="completed">Selesai</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>Statistics</h3>
+                    <h3>Statistik</h3>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon">
@@ -159,7 +159,7 @@
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">24</div>
-                                <div class="stat-label">Active Reports</div>
+                                <div class="stat-label">Laporan Aktif</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -168,7 +168,7 @@
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">8</div>
-                                <div class="stat-label">In Progress</div>
+                                <div class="stat-label">Sedang Diproses</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -177,7 +177,7 @@
                             </div>
                             <div class="stat-content">
                                 <div class="stat-value">156</div>
-                                <div class="stat-label">Completed</div>
+                                <div class="stat-label">Selesai</div>
                             </div>
                         </div>
                     </div>
@@ -193,22 +193,22 @@
                     <div class="tools-dropdown" id="toolsDropdown">
                         <button class="tools-toggle" id="toolsToggle">
                             <i class="fas fa-wrench"></i>
-                            <span>Tools</span>
+                            <span>Alat</span>
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="tools-menu" id="toolsMenu">
                             <div class="tools-section">
-                                <div class="tools-section-title">Tools</div>
-                                <button data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Select</span></button>
-                                <button data-tool="measure"><i class="fas fa-ruler"></i><span>Measure</span></button>
+                                <div class="tools-section-title">Alat</div>
+                                <button data-tool="select"><i class="fas fa-mouse-pointer"></i><span>Pilih</span></button>
+                                <button data-tool="measure"><i class="fas fa-ruler"></i><span>Ukur</span></button>
                             </div>
                             <div class="tools-section mobile-only" id="toolsLegend">
-                                <div class="tools-section-title">Legend</div>
+                                <div class="tools-section-title">Legenda</div>
                                 <div class="tools-legend-items">
-                                    <div class="legend-item"><div class="legend-color high"></div><span>High Priority</span></div>
-                                    <div class="legend-item"><div class="legend-color medium"></div><span>Medium Priority</span></div>
-                                    <div class="legend-item"><div class="legend-color low"></div><span>Low Priority</span></div>
-                                    <div class="legend-item"><div class="legend-color completed"></div><span>Completed</span></div>
+                                    <div class="legend-item"><div class="legend-color high"></div><span>Prioritas Tinggi</span></div>
+                                    <div class="legend-item"><div class="legend-color medium"></div><span>Prioritas Sedang</span></div>
+                                    <div class="legend-item"><div class="legend-color low"></div><span>Prioritas Rendah</span></div>
+                                    <div class="legend-item"><div class="legend-color completed"></div><span>Selesai</span></div>
                                 </div>
                             </div>
                         </div>
@@ -229,22 +229,22 @@
 
                 <!-- Map Legend -->
                 <div class="map-legend">
-                    <h4>Legend</h4>
+                    <h4>Legenda</h4>
                     <div class="legend-item">
                         <div class="legend-color high"></div>
-                        <span>High Priority</span>
+                        <span>Prioritas Tinggi</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color medium"></div>
-                        <span>Medium Priority</span>
+                        <span>Prioritas Sedang</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color low"></div>
-                        <span>Low Priority</span>
+                        <span>Prioritas Rendah</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color completed"></div>
-                        <span>Completed</span>
+                        <span>Selesai</span>
                     </div>
                 </div>
             </main>
@@ -255,25 +255,25 @@
     <div id="reportModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Report Details</h3>
+                <h3>Detail Laporan</h3>
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="report-details">
                     <div class="detail-row">
-                        <span class="label">Report ID:</span>
+                        <span class="label">ID Laporan:</span>
                         <span class="value" id="reportId">-</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">Location:</span>
+                        <span class="label">Lokasi:</span>
                         <span class="value" id="reportLocation">-</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">Damage Type:</span>
+                        <span class="label">Tipe Kerusakan:</span>
                         <span class="value" id="damageType">-</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">Priority:</span>
+                        <span class="label">Prioritas:</span>
                         <span class="value" id="reportPriority">-</span>
                     </div>
                     <div class="detail-row">
@@ -281,15 +281,15 @@
                         <span class="value" id="reportStatus">-</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">Reported By:</span>
+                        <span class="label">Dilaporkan Oleh:</span>
                         <span class="value" id="reportedBy">-</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">Date:</span>
+                        <span class="label">Tanggal:</span>
                         <span class="value" id="reportDate">-</span>
                     </div>
                     <div class="detail-row">
-                        <span class="label">Description:</span>
+                        <span class="label">Deskripsi:</span>
                         <span class="value" id="reportDescription">-</span>
                     </div>
                 </div>

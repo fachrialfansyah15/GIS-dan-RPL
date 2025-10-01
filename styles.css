@@ -2411,3 +2411,23 @@ body {
     .quick-actions-menu.open { display: flex !important; }
     .quick-actions-backdrop.show { display: block !important; }
 }
+
+/* Mobile hamburger clickability + tools visibility fixes */
+@media (max-width: 900px) {
+    /* Ensure header/hamburger sit above map and other elements */
+    .header { position: relative; z-index: 2500; }
+    .hamburger { z-index: 4000 !important; pointer-events: auto !important; }
+
+    /* Quick actions overlay (mobile) */
+    .quick-actions-menu { position: fixed; top: 60px; left: 12px; z-index: 5000; }
+    .quick-actions-menu.open { display: flex !important; }
+    .quick-actions-backdrop.show { display: block !important; z-index: 4500; }
+
+    /* Show tools dropdown only on mobile */
+    .tools-dropdown { display: inline-block !important; }
+}
+
+@media (min-width: 901px) {
+    /* Hide tools dropdown on desktop with strong specificity */
+    .map-controls .tools-dropdown { display: none !important; }
+}

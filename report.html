@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Damage - Road Monitor Palu</title>
+    <title>Lapor Kerusakan - SIPATUJU</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -18,11 +18,11 @@
                 </button>
                 <div class="logo">
                     <i class="fas fa-bars desktop-logo"></i>
-                    <span>Road Monitor Palu</span>
+                    <span>SIPATUJU</span>
                 </div>
             </div>
             <div class="header-center">
-                <h1>Report Road Damage</h1>
+                <h1>Lapor Kerusakan Jalan</h1>
             </div>
             <div class="header-right">
                 <div class="user-controls">
@@ -52,10 +52,10 @@
         <div class="quick-actions-bar">
             <div class="qa-container">
                 <a class="qa-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                <a class="qa-link" href="map.html"><i class="fas fa-map-marked-alt"></i><span>Map</span></a>
-                <a class="qa-link active" href="report.html"><i class="fas fa-plus-circle"></i><span>Report</span></a>
-                <a class="qa-link" href="reports.html"><i class="fas fa-list-alt"></i><span>Reports</span></a>
-                <a class="qa-link" href="about.html"><i class="fas fa-info-circle"></i><span>About</span></a>
+                <a class="qa-link" href="map.html"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+                <a class="qa-link active" href="report.html"><i class="fas fa-plus-circle"></i><span>Lapor</span></a>
+                <a class="qa-link" href="reports.html"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+                <a class="qa-link" href="about.html"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
             </div>
         </div>
         <div class="quick-actions-backdrop" id="quickActionsBackdrop"></div>
@@ -70,23 +70,23 @@
                 </a>
                 <a href="map.html" class="nav-item">
                     <i class="fas fa-map-marked-alt"></i>
-                    <span>Map View</span>
+                    <span>Tampilan Peta</span>
                 </a>
                 <a href="report.html" class="nav-item active">
                     <i class="fas fa-plus-circle"></i>
-                    <span>Report Damage</span>
+                    <span>Lapor Kerusakan</span>
                 </a>
                 <a href="reports.html" class="nav-item">
                     <i class="fas fa-list-alt"></i>
-                    <span>All Reports</span>
+                    <span>Semua Laporan</span>
                 </a>
                 <a href="admin-validation.html" class="nav-item admin-only">
                     <i class="fas fa-shield-alt"></i>
-                    <span>Validate Reports</span>
+                    <span>Validasi Laporan</span>
                 </a>
                 <a href="about.html" class="nav-item">
                     <i class="fas fa-info-circle"></i>
-                    <span>About</span>
+                    <span>Tentang</span>
                 </a>
             </div>
         </nav>
@@ -97,78 +97,78 @@
                 <div class="report-form-section">
                     <div class="form-card">
                         <div class="card-header">
-                            <h2>Report Road Damage</h2>
-                            <p>Help us maintain better roads in Palu City by reporting any damage you encounter.</p>
+                            <h2>Lapor Kerusakan Jalan</h2>
+                            <p>Bantu kami menjaga jalan yang lebih baik di Kota Palu dengan melaporkan kerusakan yang Anda temui.</p>
                         </div>
 
                         <form class="report-form" id="damageReportForm">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="damageSeverity">Damage Type *</label>
+                                    <label for="damageSeverity">Tipe Kerusakan *</label>
                                     <select id="damageSeverity" name="damageSeverity" required>
-                                        <option value="">Select damage type</option>
-                                        <option value="Minor Damage">Minor Damage</option>
-                                        <option value="Medium Damage">Medium Damage</option>
-                                        <option value="Severe Damage">Severe Damage</option>
+                                        <option value="">Pilih tipe kerusakan</option>
+                                        <option value="Minor Damage">Kerusakan Ringan</option>
+                                        <option value="Medium Damage">Kerusakan Sedang</option>
+                                        <option value="Severe Damage">Kerusakan Berat</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="priority">Priority Level (Frontend only)</label>
+                                    <label for="priority">Tingkat Prioritas (Hanya Frontend)</label>
                                     <select id="priority" name="priority">
-                                        <option value="">Select priority</option>
-                                        <option value="high">High - Immediate attention needed</option>
-                                        <option value="medium">Medium - Should be addressed soon</option>
-                                        <option value="low">Low - Can be scheduled for later</option>
+                                        <option value="">Pilih prioritas</option>
+                                        <option value="high">Tinggi - Perlu perhatian segera</option>
+                                        <option value="medium">Sedang - Harus segera ditangani</option>
+                                        <option value="low">Rendah - Bisa dijadwalkan nanti</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="streetName">Street Name *</label>
-                                    <input type="text" id="streetName" name="streetName" placeholder="Enter street name" required>
+                                    <label for="streetName">Nama Jalan *</label>
+                                    <input type="text" id="streetName" name="streetName" placeholder="Masukkan nama jalan" required>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="coordinates">Coordinates *</label>
-                                    <input type="text" id="coordinates" name="coordinates" placeholder="Lat, Lng (auto-filled from map)" required readonly>
+                                    <label for="coordinates">Koordinat *</label>
+                                    <input type="text" id="coordinates" name="coordinates" placeholder="Lat, Lng (diisi otomatis dari peta)" required readonly>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="roadPhoto">Road Photo</label>
+                                <label for="roadPhoto">Foto Jalan</label>
                                 <div class="file-upload">
                                     <input type="file" id="roadPhoto" name="roadPhoto" accept="image/*">
                                     <label for="roadPhoto" class="file-upload-label">
                                         <i class="fas fa-camera"></i>
-                                        <span>Upload Road Photo</span>
+                                        <span>Unggah Foto Jalan</span>
                                     </label>
                                 </div>
                                 <div class="file-preview" id="filePreview"></div>
                             </div>
 
                             <div class="form-group">
-                                <label for="description">Description </label>
-                                <textarea id="description" name="description" rows="4" placeholder="Please provide detailed description of the damage..." ></textarea>
+                                <label for="description">Deskripsi </label>
+                                <textarea id="description" name="description" rows="4" placeholder="Berikan deskripsi detail tentang kerusakan..." ></textarea>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="reporterName">Your Name *</label>
+                                    <label for="reporterName">Nama Anda *</label>
                                     <input type="text" id="reporterName" name="reporterName" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="reporterEmail">Email</label>
-                                    <input type="email" id="reporterEmail" name="reporterEmail" placeholder="Optional - for updates">
+                                    <input type="email" id="reporterEmail" name="reporterEmail" placeholder="Opsional - untuk update">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="reporterPhone">Phone</label>
-                                    <input type="tel" id="reporterPhone" name="reporterPhone" placeholder="Optional - for urgent cases">
+                                    <label for="reporterPhone">Telepon</label>
+                                    <input type="tel" id="reporterPhone" name="reporterPhone" placeholder="Opsional - untuk kasus darurat">
                                 </div>
                                 
                             </div>
@@ -176,11 +176,11 @@
                             <div class="form-actions">
                                 <button type="button" class="btn-secondary" id="previewBtn">
                                     <i class="fas fa-eye"></i>
-                                    Preview
+                                    Pratinjau
                                 </button>
                                 <button type="submit" class="btn-primary">
                                     <i class="fas fa-paper-plane"></i>
-                                    Submit Report
+                                    Kirim Laporan
                                 </button>
                             </div>
                         </form>
@@ -190,14 +190,14 @@
                 <div class="map-section">
                     <div class="map-card">
                         <div class="card-header">
-                            <h3>Select Location on Map</h3>
-                            <p>Click on the map to mark the exact location of the damage.</p>
+                            <h3>Pilih Lokasi di Peta</h3>
+                            <p>Klik pada peta untuk menandai lokasi tepat kerusakan.</p>
                         </div>
                         <div class="map-container-small">
                             <div id="locationMap"></div>
                         </div>
                         <div class="map-instructions">
-                            <p><i class="fas fa-info-circle"></i> Click on the map to set the exact location of the damage.</p>
+                            <p><i class="fas fa-info-circle"></i> Klik pada peta untuk mengatur lokasi tepat kerusakan.</p>
                         </div>
                     </div>
                 </div>
@@ -209,7 +209,7 @@
     <div id="previewModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Report Preview</h3>
+                <h3>Pratinjau Laporan</h3>
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
@@ -219,7 +219,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" id="editReport">Edit</button>
-                <button type="button" class="btn-primary" id="confirmSubmit">Confirm Submit</button>
+                <button type="button" class="btn-primary" id="confirmSubmit">Konfirmasi Kirim</button>
             </div>
         </div>
     </div>
@@ -228,17 +228,17 @@
     <div id="successModal" class="modal">
         <div class="modal-content">
             <div class="modal-header success">
-                <h3><i class="fas fa-check-circle"></i> Report Submitted Successfully!</h3>
+                <h3><i class="fas fa-check-circle"></i> Laporan Berhasil Dikirim!</h3>
             </div>
             <div class="modal-body">
-                <p>Thank you for reporting this road damage. Your report has been submitted and will be reviewed by our team.</p>
+                <p>Terima kasih telah melaporkan kerusakan jalan ini. Laporan Anda telah dikirim dan akan ditinjau oleh tim kami.</p>
                 <div class="report-summary" id="reportSummary">
                     <!-- Report summary will be shown here -->
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-primary" id="viewReport">View Report</button>
-                <button type="button" class="btn-secondary" id="newReport">Submit Another</button>
+                <button type="button" class="btn-primary" id="viewReport">Lihat Laporan</button>
+                <button type="button" class="btn-secondary" id="newReport">Kirim Lainnya</button>
             </div>
         </div>
     </div>
