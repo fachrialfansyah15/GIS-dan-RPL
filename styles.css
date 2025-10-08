@@ -2431,3 +2431,65 @@ body {
     /* Hide tools dropdown on desktop with strong specificity */
     .map-controls .tools-dropdown { display: none !important; }
 }
+
+/* --- Icon to text spacing tweaks (desktop + mobile) --- */
+.nav-item i,
+.qa-link i,
+.quick-action-item i,
+.tool-btn i,
+.map-control-btn i {
+    margin-right: 8px; /* tighter gap between icon and label */
+}
+
+/* Login page feature list: make icon and text tighter and aligned */
+/* Login hero features: tighter, clean alignment using grid */
+.login-info .features { gap: 20px; }
+.login-info .features .feature {
+    display: grid;
+    grid-template-columns: 28px 1fr; /* icon | text */
+    column-gap: 12px;
+    row-gap: 4px;
+    align-items: start;
+}
+.login-info .features .feature i {
+    grid-row: 1 / span 2; /* icon spans title + desc */
+    margin: 0;
+    font-size: 22px;
+    line-height: 1;
+}
+.login-info .features .feature h3 {
+    grid-column: 2;
+    margin: 0;
+    line-height: 1.25;
+}
+.login-info .features .feature p {
+    grid-column: 2;
+    margin: 2px 0 0 0;
+    line-height: 1.35;
+}
+
+/* Ensure quick actions menu and links are clickable above everything */
+.quick-actions-menu {
+    pointer-events: auto; /* allow clicks */
+}
+.quick-actions-menu a,
+.quick-actions-menu .quick-action-item { pointer-events: auto; }
+
+/* Backdrop should only intercept clicks when visible */
+.quick-actions-backdrop { display: none; pointer-events: none; }
+.quick-actions-backdrop.show { display: block !important; pointer-events: auto; }
+
+/* Prevent hidden layers from blocking taps */
+.quick-actions-bar[hidden],
+.quick-actions-menu[hidden],
+.sidebar[hidden] { display: none !important; }
+
+/* Mobile: keep hamburger perfectly tappable next to title */
+@media (max-width: 900px) {
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .hamburger { background: #fff; border-radius: 8px; }
+    .quick-actions-bar .qa-container .qa-link i { margin-right: 6px; }
+    /* Ensure login features keep tight alignment on small screens */
+    .login-info .features .feature { grid-template-columns: 26px 1fr; column-gap: 10px; }
+    .login-info .features .feature i { font-size: 20px; }
+}
