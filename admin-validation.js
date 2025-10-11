@@ -5,6 +5,7 @@ class AdminValidation {
         this.map = null;
         this.pendingReports = [];
         this.selectedReport = null;
+        this.supabase = null; // Tambahkan properti supabase
         this.init();
     }
 
@@ -85,34 +86,42 @@ class AdminValidation {
         });
     }
 
-    loadPendingReports() {
-        // Get all reports from localStorage
-        const allReports = JSON.parse(localStorage.getItem('roadDamageReports') || '[]');
-        
-        // Filter pending reports (status: 'pending' or 'reported')
-        this.pendingReports = allReports.filter(report => 
-            report.status === 'pending' || report.status === 'reported'
-        );
-
+    async loadPendingReports() {
+        // Ambil laporan dari Supabase (bukan localStorage)
+        if (!this.supabase) {
+            this.initializeSupabase && this.initializeSupabase();
+            if (!this.supabase) return;
+        }
+        try {
+            const { data, error } = await this.supabase.from('laporan_masuk').select('*').eq('status', 'menunggu');
+            this.pendingReports = (!error && Array.isArray(data)) ? data : [];
+        } catch (e) {
+            this.pendingReports = [];
+        }
         this.updateStats();
         this.displayPendingReports();
     }
 
-    updateStats() {
-        const allReports = JSON.parse(localStorage.getItem('roadDamageReports') || '[]');
-        
-        const pendingCount = allReports.filter(r => r.status === 'pending' || r.status === 'reported').length;
-        const approvedCount = allReports.filter(r => r.status === 'approved' || r.status === 'in_progress' || r.status === 'completed').length;
-        const rejectedCount = allReports.filter(r => r.status === 'rejected').length;
-
-        document.getElementById('pendingCount').textContent = pendingCount;
-        document.getElementById('approvedCount').textContent = approvedCount;
-        document.getElementById('rejectedCount').textContent = rejectedCount;
+    async updateStats() {
+        // Ambil statistik validasi dari tabel Supabase
+        let pending = 0, approved = 0, rejected = 0;
+        if (this.supabase) {
+            try {
+                let result = await this.supabase.from('laporan_masuk').select('status');
+                if (!result.error && Array.isArray(result.data)) {
+                    pending = result.data.filter(r => (r.status||'').toLowerCase() === 'menunggu').length;
+                    approved = result.data.filter(r => (r.status||'').toLowerCase() === 'approved').length;
+                    rejected = result.data.filter(r => (r.status||'').toLowerCase() === 'ditolak').length;
+                }
+            } catch(_){}
+        }
+        document.getElementById('pendingCount').textContent = pending;
+        document.getElementById('approvedCount').textContent = approved;
+        document.getElementById('rejectedCount').textContent = rejected;
     }
 
     displayPendingReports() {
         const reportsList = document.getElementById('pendingReportsList');
-        
         if (this.pendingReports.length === 0) {
             reportsList.innerHTML = `
                 <div class="no-reports">
@@ -123,28 +132,21 @@ class AdminValidation {
             `;
             return;
         }
-
         reportsList.innerHTML = this.pendingReports.map(report => `
             <div class="report-card pending" data-report-id="${report.id}">
                 <div class="report-header">
-                    <div class="report-id">${report.id}</div>
-                    <div class="report-priority ${report.priority}">${report.priority}</div>
+                    <div class="report-id">${report.kode_titik_jalan}</div>
                 </div>
                 <div class="report-content">
-                    <h4>${report.damageType.charAt(0).toUpperCase() + report.damageType.slice(1)}</h4>
+                    <h4>${report.jenis_kerusakan}</h4>
                     <p class="report-location">
                         <i class="fas fa-map-marker-alt"></i>
-                        ${report.location}
+                        ${report.nama_jalan}
                     </p>
-                    <p class="report-description">${report.description}</p>
                     <div class="report-meta">
                         <span class="report-date">
                             <i class="fas fa-clock"></i>
-                            ${new Date(report.date).toLocaleDateString()}
-                        </span>
-                        <span class="report-reporter">
-                            <i class="fas fa-user"></i>
-                            ${report.reporter}
+                            ${report.tanggal_survey}
                         </span>
                     </div>
                 </div>
@@ -163,124 +165,67 @@ class AdminValidation {
     }
 
     viewReportOnMap(reportId) {
-        const report = this.pendingReports.find(r => r.id === reportId);
-        if (report && report.coordinates) {
+        const report = this.pendingReports.find(r => r.id == reportId);
+        if (report && report.Latitude && report.Longitude) {
             // Clear existing markers
             this.map.eachLayer(layer => {
                 if (layer instanceof L.Marker) {
                     this.map.removeLayer(layer);
                 }
             });
-
             // Add report marker
-            const marker = L.marker(report.coordinates, {
+            const marker = L.marker([report.Latitude, report.Longitude], {
                 icon: L.divIcon({
                     className: 'validation-marker',
-                    html: `<i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 20px;"></i>`,
+                    html: `<i class='fas fa-exclamation-triangle' style='color: #dc3545; font-size: 20px;'></i>`,
                     iconSize: [20, 20],
                     iconAnchor: [10, 10]
                 })
             }).addTo(this.map);
-
-            marker.bindPopup(`
-                <div class="validation-popup">
-                    <h4>${report.damageType.charAt(0).toUpperCase() + report.damageType.slice(1)}</h4>
-                    <p><strong>Location:</strong> ${report.location}</p>
-                    <p><strong>Priority:</strong> ${report.priority}</p>
-                    <p><strong>Reporter:</strong> ${report.reporter}</p>
-                    <p><strong>Date:</strong> ${new Date(report.date).toLocaleDateString()}</p>
-                </div>
-            `).openPopup();
-
-            // Center map on report
-            this.map.setView(report.coordinates, 15);
+            marker.bindPopup(`<div class='validation-popup'><h4>${report.jenis_kerusakan}</h4><p><strong>Location:</strong> ${report.nama_jalan}</p></div>`).openPopup();
+            this.map.setView([report.Latitude, report.Longitude], 15);
         }
     }
 
     openValidationModal(reportId) {
-        const report = this.pendingReports.find(r => r.id === reportId);
+        const report = this.pendingReports.find(r => r.id == reportId);
         if (!report) return;
-
         this.selectedReport = report;
-        
         const modal = document.getElementById('validationModal');
         const detailsContainer = document.getElementById('validationReportDetails');
-        
         detailsContainer.innerHTML = `
-            <div class="validation-report-info">
-                <div class="info-row">
-                    <span class="label">Report ID:</span>
-                    <span class="value">${report.id}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Damage Type:</span>
-                    <span class="value">${report.damageType.charAt(0).toUpperCase() + report.damageType.slice(1)}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Location:</span>
-                    <span class="value">${report.location}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Priority:</span>
-                    <span class="value priority-${report.priority}">${report.priority.toUpperCase()}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Reporter:</span>
-                    <span class="value">${report.reporter}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Date:</span>
-                    <span class="value">${new Date(report.date).toLocaleString()}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Description:</span>
-                    <span class="value">${report.description}</span>
-                </div>
-                ${report.reporterEmail ? `
-                <div class="info-row">
-                    <span class="label">Email:</span>
-                    <span class="value">${report.reporterEmail}</span>
-                </div>
-                ` : ''}
-                ${report.reporterPhone ? `
-                <div class="info-row">
-                    <span class="label">Phone:</span>
-                    <span class="value">${report.reporterPhone}</span>
-                </div>
-                ` : ''}
+            <div class='validation-report-info'>
+                <div class='info-row'><span class='label'>Report ID:</span><span class='value'>${report.kode_titik_jalan}</span></div>
+                <div class='info-row'><span class='label'>Damage Type:</span><span class='value'>${report.jenis_kerusakan}</span></div>
+                <div class='info-row'><span class='label'>Location:</span><span class='value'>${report.nama_jalan}</span></div>
+                <div class='info-row'><span class='label'>Date:</span><span class='value'>${report.tanggal_survey}</span></div>
             </div>
         `;
-
         modal.style.display = 'block';
     }
 
-    validateReport(decision) {
+    async validateReport(decision) {
         if (!this.selectedReport) return;
-
-        const allReports = JSON.parse(localStorage.getItem('roadDamageReports') || '[]');
-        const reportIndex = allReports.findIndex(r => r.id === this.selectedReport.id);
-        
-        if (reportIndex !== -1) {
-            if (decision === 'approved') {
-                allReports[reportIndex].status = 'approved';
-                allReports[reportIndex].validatedBy = window.auth.getCurrentUser();
-                allReports[reportIndex].validatedAt = new Date().toISOString();
-                this.showMessage('Report approved successfully!', 'success');
-            } else {
-                allReports[reportIndex].status = 'rejected';
-                allReports[reportIndex].rejectedBy = window.auth.getCurrentUser();
-                allReports[reportIndex].rejectedAt = new Date().toISOString();
-                this.showMessage('Report rejected.', 'info');
-            }
-
-            localStorage.setItem('roadDamageReports', JSON.stringify(allReports));
-            
-            // Close modal
-            document.getElementById('validationModal').style.display = 'none';
-            
-            // Reload pending reports
-            this.loadPendingReports();
+        if (!this.supabase) this.initializeSupabase && this.initializeSupabase();
+        if (!this.supabase) return;
+        const report = this.selectedReport;
+        if (decision === 'approved') {
+            // Pindahkan ke jalan_rusak (insert semua kolom)
+            const newRow = { ...report };
+            delete newRow.id; // biar auto-increment id baru di jalan_rusak
+            // insert
+            await this.supabase.from('jalan_rusak').insert([newRow]);
+            // update laporan_masuk ke status 'approved'
+            await this.supabase.from('laporan_masuk').update({ status: 'approved' }).eq('id', report.id);
+            this.showMessage('Report approved successfully!', 'success');
+        } else {
+            // Tolak: update status ke "ditolak"
+            await this.supabase.from('laporan_masuk').update({ status: 'ditolak' }).eq('id', report.id);
+            this.showMessage('Report rejected.', 'info');
         }
+        document.getElementById('validationModal').style.display = 'none';
+        // Refresh
+        await this.loadPendingReports();
     }
 
     showMessage(message, type) {
@@ -317,6 +262,17 @@ class AdminValidation {
                 }
             }, 300);
         }, 3000);
+    }
+
+    // Tambahkan fungsi this.initializeSupabase (sama dengan dashboard.js)
+    initializeSupabase() {
+        if (window.supabase && window.supabase.createClient) {
+            const supabase_url = window.SUPABASE_URL;
+            const supabase_key = window.SUPABASE_KEY;
+            this.supabase = (supabase_url && supabase_key) ? window.supabase.createClient(supabase_url, supabase_key) : null;
+        } else {
+            this.supabase = null;
+        }
     }
 }
 

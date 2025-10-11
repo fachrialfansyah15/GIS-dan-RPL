@@ -60,21 +60,27 @@ class RoadMonitorMap {
             console.error('[Leaflet] #map container not found in DOM.');
             return;
         }
-
-        // Initialize Leaflet map focused on Palu City
+        // Inisialisasi Leaflet map terkunci di Sulawesi Tengah
+        // Bounding box Sulawesi Tengah kira2: [latLower, lngLeft], [latUpper, lngRight]
+        const bounds = L.latLngBounds([
+            [-2.5, 119.5],  // SW (lat, lng)
+            [1.2, 122.0]    // NE (lat, lng)
+        ]);
         this.map = L.map('map', {
-            center: [-0.8966, 119.8756], // Palu City coordinates
-            zoom: 13,
-            zoomControl: false
+            center: [-0.8966, 120.9],
+            zoom: 8,
+            zoomControl: false,
+            maxBounds: bounds,
+            minZoom: 7,
+            maxZoom: 14
         });
-
+        this.map.setMaxBounds(bounds);
+        this.map.on('drag', function(){ this.panInsideBounds(bounds, { animate: false }); });
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(this.map);
-
-        // Initialize layers
         this.damageLayer = L.layerGroup().addTo(this.map);
         this.maintenanceLayer = L.layerGroup().addTo(this.map);
     }
@@ -314,7 +320,10 @@ class RoadMonitorMap {
 
     loadMapData() {
         this.loadDamageReports();
-        this.loadMaintenanceData();
+        // Hapus semua pemanggilan data dummy/statik untuk marker!
+        // this.loadMaintenanceData(); (optional, soon-to-be removed)
+        if (this._refreshInterval) clearInterval(this._refreshInterval);
+        this._refreshInterval = setInterval(()=>this.loadDamageReports(), 30000);
     }
 
     loadRoadData() {
@@ -338,7 +347,8 @@ class RoadMonitorMap {
     }
 
     async loadDamageReports() {
-        // Try to load from Supabase first
+        this.damageLayer.clearLayers();
+        // Selalu gunakan Supabase
         if (this.supabase) {
             try {
                 const { data, error } = await this.supabase
@@ -346,26 +356,17 @@ class RoadMonitorMap {
                     .select('*');
                 if (!error && Array.isArray(data)) {
                     data.forEach(row => {
-                        const report = {
-                            id: row.kode_titik || `RPT-${row.id || Date.now()}`,
-                            type: this.mapSeverity(row.jenis_kerusakan),
-                            priority: 'medium',
-                            status: 'reported',
-                            location: row.nama_jalan || '-',
-                            coordinates: [row.latitude, row.longitude],
-                            description: '',
-                            reporter: '',
-                            date: row.tanggal_survey || new Date().toISOString(),
-                            foto: row.foto_jalan || ''
-                        };
-                        const marker = this.createReportMarker(report);
-                        if (report.foto) {
-                            marker.bindPopup(`<div style="min-width:220px">
-                                <strong>${report.location}</strong><br/>
-                                ${report.type}<br/>
-                                <img src="${report.foto}" alt="foto jalan" style="width:200px;margin-top:6px;border-radius:6px"/>
-                            </div>`);
-                        }
+                        // Wajib pakai Latitude & Longitude
+                        const lat = parseFloat(row.Latitude);
+                        const lng = parseFloat(row.Longitude);
+                        if (isNaN(lat) || isNaN(lng)) return;
+                        const marker = L.marker([lat, lng], { icon: this.getReportIcon('Severe Damage', 'medium') });
+                        let content = `<div style='min-width:220px'>`;
+                        content += `<strong>${row.nama_jalan || '-'}</strong><br/>`;
+                        content += `Jenis kerusakan: ${row.jenis_kerusakan || '-'}<br/>`;
+                        if (row.foto_jalan) content += `<img src='${row.foto_jalan}' alt='foto jalan' style='width:200px;margin-top:6px;border-radius:6px'/><br/>`;
+                        content += `</div>`;
+                        marker.bindPopup(content);
                         this.damageLayer.addLayer(marker);
                     });
                     return;
@@ -379,13 +380,6 @@ class RoadMonitorMap {
                 this.showInlineNotice('Kesalahan koneksi ke Supabase.');
             }
         }
-
-        // Fallback ke data lokal
-        const reports = this.getDamageReports();
-        reports.forEach(report => {
-            const marker = this.createReportMarker(report);
-            this.damageLayer.addLayer(marker);
-        });
     }
 
     showInlineNotice(message) {

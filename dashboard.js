@@ -48,58 +48,49 @@ class Dashboard {
     initializeMapPreview() {
         // Initialize small map for dashboard preview
         this.map = L.map('mapPreview', {
-            center: [-0.8966, 119.8756], // Palu City coordinates
-            zoom: 12,
+            center: [-0.8966, 120.9],
+            zoom: 8,
             zoomControl: false,
             attributionControl: false
         });
-
-        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(this.map);
-
-        // Add sample damage reports
-        this.addSampleReports();
+        this.reportLayer = L.layerGroup().addTo(this.map);
+        // Tampil marker awal
+        this.refreshMapPreview();
+        // Add auto-refresh interval
+        if (this._refreshInterval) clearInterval(this._refreshInterval);
+        this._refreshInterval = setInterval(()=>{
+            this.refreshMapPreview();
+            this.updateStatistics();
+        }, 30000);
     }
 
-    addSampleReports() {
-        const reports = [
-            {
-                position: [-0.8966, 119.8756],
-                type: 'pothole',
-                priority: 'high',
-                title: 'Large Pothole on Jl. Sudirman'
-            },
-            {
-                position: [-0.9000, 119.8800],
-                type: 'crack',
-                priority: 'medium',
-                title: 'Road Crack on Jl. Ahmad Yani'
-            },
-            {
-                position: [-0.8900, 119.8700],
-                type: 'flooding',
-                priority: 'high',
-                title: 'Flooding on Jl. Gatot Subroto'
+    async refreshMapPreview() {
+        // Hapus semua marker lama
+        if (this.reportLayer) this.reportLayer.clearLayers();
+        if (!this.supabase) return;
+        try {
+            const { data, error } = await this.supabase.from('jalan_rusak').select('*');
+            if (!error && Array.isArray(data)) {
+                data.forEach(row => {
+                    const lat = parseFloat(row.Latitude);
+                    const lng = parseFloat(row.Longitude);
+                    if (isNaN(lat) || isNaN(lng)) return;
+                    const marker = L.marker([lat, lng], {
+                        icon: this.getReportIcon('pothole', 'high') // or customize by kerusakan
+                    });
+                    let content = `<div style='min-width:180px'><strong>${row.nama_jalan || '-'}</strong><br/>`;
+                    content += `Jenis: ${row.jenis_kerusakan || '-'}<br/>`;
+                    if (row.foto_jalan) content += `<img src='${row.foto_jalan}' alt='foto jalan' style='width:140px;margin-top:6px;border-radius:6px'/><br/>`;
+                    content += `</div>`;
+                    marker.bindPopup(content);
+                    this.reportLayer.addLayer(marker);
+                });
             }
-        ];
-
-        reports.forEach(report => {
-            const icon = this.getReportIcon(report.type, report.priority);
-            const marker = L.marker(report.position, { icon });
-            
-            marker.bindPopup(`
-                <div class="report-popup">
-                    <h4>${report.title}</h4>
-                    <p><strong>Type:</strong> ${report.type}</p>
-                    <p><strong>Priority:</strong> ${report.priority}</p>
-                </div>
-            `);
-
-            marker.addTo(this.map);
-        });
+        } catch(err) { }
     }
 
     getReportIcon(type, priority) {
@@ -200,28 +191,25 @@ class Dashboard {
     }
 
     async updateStatistics() {
-        // Default fallback values
-        let activeReports = 0;
-        let inProgress = 0;
-        let completed = 0;
-        let avgResponse = 0;
-
+        let totalMasuk = 0;
+        let totalSetuju = 0;
+        let totalTolak = 0;
         if (this.supabase) {
             try {
-                const { data, error } = await this.supabase.from('jalan_rusak').select('*');
-                if (!error && Array.isArray(data)) {
-                    activeReports = data.length;
-                    inProgress = Math.round(activeReports * 0.3);
-                    completed = Math.max(0, activeReports - inProgress);
-                    avgResponse = 2.3; // placeholder; adjust if you store SLA metrics
+                let resp = await this.supabase.from('laporan_masuk').select('status');
+                if (!resp.error && Array.isArray(resp.data)) {
+                    totalMasuk = resp.data.length;
+                    totalTolak = resp.data.filter(r => (r.status||'').toLowerCase() === 'ditolak').length;
+                }
+                let jalan_rusak = await this.supabase.from('jalan_rusak').select('id');
+                if (!jalan_rusak.error && Array.isArray(jalan_rusak.data)) {
+                    totalSetuju = jalan_rusak.data.length;
                 }
             } catch (_) {}
         }
-
-        this.animateStatCard('.stat-card:nth-child(1) .stat-value', activeReports);
-        this.animateStatCard('.stat-card:nth-child(2) .stat-value', inProgress);
-        this.animateStatCard('.stat-card:nth-child(3) .stat-value', completed);
-        this.animateStatCard('.stat-card:nth-child(4) .stat-value', avgResponse);
+        this.animateStatCard('.stat-card:nth-child(1) .stat-value', totalMasuk);
+        this.animateStatCard('.stat-card:nth-child(2) .stat-value', totalSetuju);
+        this.animateStatCard('.stat-card:nth-child(3) .stat-value', totalTolak);
     }
 
     animateStatCard(selector, value) {

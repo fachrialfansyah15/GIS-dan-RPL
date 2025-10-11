@@ -405,8 +405,8 @@ class ReportForm {
             return;
         }
 
-        const latitude = this.selectedLocation.lat;
-        const longitude = this.selectedLocation.lng;
+        const Latitude = this.selectedLocation.lat;
+        const Longitude = this.selectedLocation.lng;
         const today = new Date().toISOString().split('T')[0];
 
         // Upload foto ke bucket 'foto_jalan'
@@ -414,7 +414,8 @@ class ReportForm {
         if (this.photoFile) {
             const sanitized = this.photoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
             const fileName = `${Date.now()}_${sanitized}`;
-            const supabase_bucket = (window.SUPABASE_BUCKETS || ['foto-jalan','foto_jalan']).find(Boolean);
+            // Pastikan bucket tepat (case sensitive)
+            const supabase_bucket = 'foto_jalan';
             const { error: uploadError } = await this.supabase
                 .storage.from(supabase_bucket)
                 .upload(fileName, this.photoFile, { upsert: false, cacheControl: '3600' });
@@ -426,30 +427,31 @@ class ReportForm {
             publicUrl = data?.publicUrl || '';
         }
 
-        // Insert ke tabel 'jalan_rusak'
+        // Insert ke tabel 'laporan_masuk'
+        const kode_titik_jalan = 'JR-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Date.now().toString().slice(-3);
         const row = {
-            kode_titik: 'JR-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Date.now().toString().slice(-3),
+            kode_titik_jalan: kode_titik_jalan,
             nama_jalan: formData.streetName,
             jenis_kerusakan: formData.damageSeverity,
-            latitude: latitude,
-            longitude: longitude,
+            Latitude,
+            Longitude,
             tanggal_survey: today,
-            foto_jalan: publicUrl
+            foto_jalan: publicUrl,
+            status: 'menunggu'
         };
-
-        const { error } = await this.supabase.from('jalan_rusak').insert([row]);
+        const { error } = await this.supabase.from('laporan_masuk').insert([row]);
         if (error) {
             this.showMessage('Gagal menyimpan data', 'error');
             return;
         }
 
-        // Simpan ringkas ke localStorage untuk daftar lokal
+        // Simpan ringkas ke localStorage untuk daftar lokal (opsional)
         const report = {
-            id: row.kode_titik,
+            id: row.kode_titik_jalan,
             damageType: row.jenis_kerusakan,
             priority: formData.priority || 'reported',
             location: row.nama_jalan,
-            coordinates: { lat: latitude, lng: longitude },
+            coordinates: { lat: Latitude, lng: Longitude },
             description: formData.description || '',
             reporter: window.auth.getCurrentUser(),
             status: 'reported',
