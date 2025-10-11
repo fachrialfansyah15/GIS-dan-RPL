@@ -14,8 +14,19 @@ class RoadMonitorMap {
         this.checkAuth();
         this.initializeMap();
         this.setupEventListeners();
+        this.initializeSupabase();
         this.loadMapData();
         this.setupMobileNav();
+    }
+
+    initializeSupabase() {
+        if (window.supabase && window.supabase.createClient) {
+            const supabase_url = window.SUPABASE_URL;
+            const supabase_key = window.SUPABASE_KEY;
+            this.supabase = (supabase_url && supabase_key) ? window.supabase.createClient(supabase_url, supabase_key) : null;
+        } else {
+            this.supabase = null;
+        }
     }
 
     checkAuth() {
@@ -38,6 +49,18 @@ class RoadMonitorMap {
     }
 
     initializeMap() {
+        // Guard: verify Leaflet and container exist
+        const container = document.getElementById('map');
+        if (!window.L) {
+            console.error('[Leaflet] Library not loaded. Ensure leaflet.css and leaflet.js are included.');
+            if (container) container.innerHTML = '<div style="padding:12px;color:#dc3545">Leaflet tidak termuat. Periksa koneksi/CDN.</div>';
+            return;
+        }
+        if (!container) {
+            console.error('[Leaflet] #map container not found in DOM.');
+            return;
+        }
+
         // Initialize Leaflet map focused on Palu City
         this.map = L.map('map', {
             center: [-0.8966, 119.8756], // Palu City coordinates
@@ -314,14 +337,74 @@ class RoadMonitorMap {
         });
     }
 
-    loadDamageReports() {
-        // Load damage reports from localStorage or generate sample data
+    async loadDamageReports() {
+        // Try to load from Supabase first
+        if (this.supabase) {
+            try {
+                const { data, error } = await this.supabase
+                    .from('jalan_rusak')
+                    .select('*');
+                if (!error && Array.isArray(data)) {
+                    data.forEach(row => {
+                        const report = {
+                            id: row.kode_titik || `RPT-${row.id || Date.now()}`,
+                            type: this.mapSeverity(row.jenis_kerusakan),
+                            priority: 'medium',
+                            status: 'reported',
+                            location: row.nama_jalan || '-',
+                            coordinates: [row.latitude, row.longitude],
+                            description: '',
+                            reporter: '',
+                            date: row.tanggal_survey || new Date().toISOString(),
+                            foto: row.foto_jalan || ''
+                        };
+                        const marker = this.createReportMarker(report);
+                        if (report.foto) {
+                            marker.bindPopup(`<div style="min-width:220px">
+                                <strong>${report.location}</strong><br/>
+                                ${report.type}<br/>
+                                <img src="${report.foto}" alt="foto jalan" style="width:200px;margin-top:6px;border-radius:6px"/>
+                            </div>`);
+                        }
+                        this.damageLayer.addLayer(marker);
+                    });
+                    return;
+                }
+                if (error) {
+                    console.error('[Supabase] loadDamageReports error:', error);
+                    this.showInlineNotice('Gagal memuat data dari Supabase (jalan_rusak). Pastikan tabel dan kebijakan RLS tersedia.');
+                }
+            } catch (err) {
+                console.error('[Supabase] exception:', err);
+                this.showInlineNotice('Kesalahan koneksi ke Supabase.');
+            }
+        }
+
+        // Fallback ke data lokal
         const reports = this.getDamageReports();
-        
         reports.forEach(report => {
             const marker = this.createReportMarker(report);
             this.damageLayer.addLayer(marker);
         });
+    }
+
+    showInlineNotice(message) {
+        const host = document.querySelector('.map-container') || document.body;
+        if (!host || host.querySelector('.inline-notice')) return;
+        const div = document.createElement('div');
+        div.className = 'inline-notice';
+        div.style.cssText = 'position:absolute;top:70px;left:16px;right:16px;background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:8px;padding:10px 12px;z-index:7000;box-shadow:0 2px 6px rgba(0,0,0,0.08)';
+        div.textContent = message;
+        host.appendChild(div);
+        setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 6000);
+    }
+
+    mapSeverity(value) {
+        // Normalisasi label ke format lama ikon
+        const v = (value || '').toLowerCase();
+        if (v.includes('berat') || v.includes('severe')) return 'Severe Damage';
+        if (v.includes('sedang') || v.includes('medium')) return 'Medium Damage';
+        return 'Minor Damage';
     }
 
     loadMaintenanceData() {

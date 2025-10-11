@@ -10,8 +10,19 @@ class Dashboard {
         this.checkAuth();
         this.initializeMapPreview();
         this.setupEventListeners();
+        this.initializeSupabase();
         this.loadDashboardData();
         this.setupMobileNav();
+    }
+
+    initializeSupabase() {
+        if (window.supabase && window.supabase.createClient) {
+            const supabase_url = window.SUPABASE_URL;
+            const supabase_key = window.SUPABASE_KEY;
+            this.supabase = (supabase_url && supabase_key) ? window.supabase.createClient(supabase_url, supabase_key) : null;
+        } else {
+            this.supabase = null;
+        }
     }
 
     checkAuth() {
@@ -182,27 +193,35 @@ class Dashboard {
         }
     }
 
-    loadDashboardData() {
-        // Simulate loading dashboard data
-        this.updateStatistics();
+    async loadDashboardData() {
+        await this.updateStatistics();
         this.loadRecentReports();
         this.loadPriorityAreas();
     }
 
-    updateStatistics() {
-        // Simulate real-time statistics updates
-        const stats = {
-            activeReports: 24,
-            inProgress: 8,
-            completed: 156,
-            avgResponse: 2.3
-        };
+    async updateStatistics() {
+        // Default fallback values
+        let activeReports = 0;
+        let inProgress = 0;
+        let completed = 0;
+        let avgResponse = 0;
 
-        // Update stat cards with animation
-        this.animateStatCard('.stat-card:nth-child(1) .stat-value', stats.activeReports);
-        this.animateStatCard('.stat-card:nth-child(2) .stat-value', stats.inProgress);
-        this.animateStatCard('.stat-card:nth-child(3) .stat-value', stats.completed);
-        this.animateStatCard('.stat-card:nth-child(4) .stat-value', stats.avgResponse);
+        if (this.supabase) {
+            try {
+                const { data, error } = await this.supabase.from('jalan_rusak').select('*');
+                if (!error && Array.isArray(data)) {
+                    activeReports = data.length;
+                    inProgress = Math.round(activeReports * 0.3);
+                    completed = Math.max(0, activeReports - inProgress);
+                    avgResponse = 2.3; // placeholder; adjust if you store SLA metrics
+                }
+            } catch (_) {}
+        }
+
+        this.animateStatCard('.stat-card:nth-child(1) .stat-value', activeReports);
+        this.animateStatCard('.stat-card:nth-child(2) .stat-value', inProgress);
+        this.animateStatCard('.stat-card:nth-child(3) .stat-value', completed);
+        this.animateStatCard('.stat-card:nth-child(4) .stat-value', avgResponse);
     }
 
     animateStatCard(selector, value) {
@@ -291,4 +310,7 @@ class Dashboard {
 
         const area = areas[areaIndex];
         if (area) {
-            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`
+            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`);
+        }
+    }
+}

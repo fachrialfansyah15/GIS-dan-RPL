@@ -5,6 +5,7 @@ class ReportForm {
         this.map = null;
         this.selectedLocation = null;
         this.photoFile = null;
+        this.supabase = null;
         this.init();
     }
 
@@ -14,6 +15,15 @@ class ReportForm {
         this.setupEventListeners();
         this.loadFormData();
         this.setupMobileNav();
+        this.initializeSupabase();
+    }
+
+    initializeSupabase() {
+        if (window.supabase && window.supabase.createClient) {
+            const supabase_url = window.SUPABASE_URL || 'https://cxcxatowzymfpasesrvp.supabase.co';
+            const supabase_key = window.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4Y3hhdG93enltZnBhc2VzcnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTY0MDIsImV4cCI6MjA3NTU5MjQwMn0.klPbBM_u-UvlG5DTMmZxRIXuczpqqLfupJUZW0gMRa0';
+            this.supabase = window.supabase.createClient(supabase_url, supabase_key);
+        }
     }
 
     checkAuth() {
@@ -36,6 +46,18 @@ class ReportForm {
     }
 
     initializeLocationMap() {
+        // Guard: verify Leaflet and container exist
+        const container = document.getElementById('locationMap');
+        if (!window.L) {
+            console.error('[Leaflet] Library not loaded. Ensure leaflet.css and leaflet.js are included.');
+            if (container) container.innerHTML = '<div style="padding:12px;color:#dc3545">Leaflet tidak termuat. Periksa koneksi/CDN.</div>';
+            return;
+        }
+        if (!container) {
+            console.error('[Leaflet] #locationMap container not found in DOM.');
+            return;
+        }
+
         // Initialize map for location selection
         this.map = L.map('locationMap', {
             center: [-0.8966, 119.8756], // Palu City coordinates
@@ -374,54 +396,60 @@ class ReportForm {
         return true;
     }
 
-    submitReport() {
+    async submitReport() {
         const formData = this.getFormData();
-        
-        if (!this.validateFormData(formData)) {
+        if (!this.validateFormData(formData)) return;
+
+        if (!this.supabase) {
+            this.showMessage('Supabase belum terinisialisasi', 'error');
             return;
         }
 
-        // Build geometry WKT (Point) for PostGIS
         const latitude = this.selectedLocation.lat;
         const longitude = this.selectedLocation.lng;
-        const geom = `POINT(${longitude} ${latitude})`;
+        const today = new Date().toISOString().split('T')[0];
 
-        // Simulate photo path/link (frontend placeholder). In real app, backend/uploads returns these.
-        let fotoJalan = '';
-        let fotoPath = '';
+        // Upload foto ke bucket 'foto_jalan'
+        let publicUrl = '';
         if (this.photoFile) {
-            fotoJalan = 'gdrive://placeholder-link';
-            fotoPath = `/uploads/${this.photoFile.name}`;
+            const sanitized = this.photoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const fileName = `${Date.now()}_${sanitized}`;
+            const supabase_bucket = (window.SUPABASE_BUCKETS || ['foto-jalan','foto_jalan']).find(Boolean);
+            const { error: uploadError } = await this.supabase
+                .storage.from(supabase_bucket)
+                .upload(fileName, this.photoFile, { upsert: false, cacheControl: '3600' });
+            if (uploadError) {
+                this.showMessage('Upload foto gagal', 'error');
+                return;
+            }
+            const { data } = this.supabase.storage.from(supabase_bucket).getPublicUrl(fileName);
+            publicUrl = data?.publicUrl || '';
         }
 
-        const payload = {
-            jalan_rusak: {
-                nama_jalan: formData.streetName,
-                jenis_kerusakan: formData.damageSeverity,
-                latitude: latitude,
-                longitude: longitude,
-                geom: geom,
-                foto_jalan: fotoJalan,
-                foto_path: fotoPath
-            },
-            reporter: {
-                name: formData.reporterName,
-                email: formData.reporterEmail || '',
-                phone: formData.reporterPhone || ''
-            },
-            additional: {
-                priority: formData.priority || '',
-                description: formData.description || ''
-            }
+        // Insert ke tabel 'jalan_rusak'
+        const row = {
+            kode_titik: 'JR-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Date.now().toString().slice(-3),
+            nama_jalan: formData.streetName,
+            jenis_kerusakan: formData.damageSeverity,
+            latitude: latitude,
+            longitude: longitude,
+            tanggal_survey: today,
+            foto_jalan: publicUrl
         };
 
-        // Persist original-style report locally (optional for in-app listing)
+        const { error } = await this.supabase.from('jalan_rusak').insert([row]);
+        if (error) {
+            this.showMessage('Gagal menyimpan data', 'error');
+            return;
+        }
+
+        // Simpan ringkas ke localStorage untuk daftar lokal
         const report = {
-            id: 'RPT-' + Date.now().toString().slice(-6),
-            damageType: formData.damageSeverity,
+            id: row.kode_titik,
+            damageType: row.jenis_kerusakan,
             priority: formData.priority || 'reported',
-            location: formData.streetName,
-            coordinates: this.selectedLocation,
+            location: row.nama_jalan,
+            coordinates: { lat: latitude, lng: longitude },
             description: formData.description || '',
             reporter: window.auth.getCurrentUser(),
             status: 'reported',
@@ -429,14 +457,8 @@ class ReportForm {
         };
         this.saveReport(report);
 
-        // For now, show JSON payload as preview of what will be sent to backend
-        console.log('Payload to submit:', payload);
-        window.localStorage.setItem('last_report_payload', JSON.stringify(payload));
-
-        // Show success modal
         this.showSuccessModal(report);
-
-        // Close preview modal
+        alert('Laporan berhasil dikirim ke Supabase!');
         document.getElementById('previewModal').style.display = 'none';
     }
 
