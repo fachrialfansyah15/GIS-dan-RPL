@@ -280,21 +280,34 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    padding-top: 110px; /* header (60) + nav (50) */
 }
 
 /* Navigation */
+/* Navigation fixed under header */
 .navigation {
+    position: fixed;
+    top: 60px; left: 0; right: 0;
+    height: 50px;
     background: white;
     border-bottom: 1px solid #e0e0e0;
-    padding: 0 20px;
+    padding: 0 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    z-index: 990;
 }
 
 .nav-container {
     display: flex;
     gap: 0;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    justify-content: flex-start;
+}
+
+/* Hide quick actions strip to avoid duplicate navigation */
+.quick-actions, .qa-container, .quick-actions-backdrop {
+    display: none !important;
 }
 
 /* Mobile hamburger */
@@ -352,8 +365,10 @@ body {
     font-size: 16px;
 }
 
-/* Header Styles */
+/* Header Styles (fixed 60px) */
 .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 0 20px;
@@ -506,13 +521,468 @@ body {
     width: 16px;
 }
 
-/* Main Content */
+/* Main content wrapper - default */
 .main-content {
-    flex: 1;
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 110px);
+}
+
+/* Main content grid layout - only for map page */
+.main-content.map-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  margin: 0 auto;
+  max-width: 1600px;
+  width: 100%;
+  height: calc(100vh - 110px);
+}
+
+/* Reports page two-column layout */
+.main-content.reports-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* Submit panel (left column) */
+.submit-panel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 24px;
+  position: sticky;
+  top: 130px;
+}
+
+.submit-panel .panel-header h3 {
+  color: #667eea;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submit-panel .panel-header p {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.submit-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn-submit-report {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-submit-report:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.submit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.submit-info .info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #666;
+  font-size: 13px;
+}
+
+.submit-info .info-item i {
+  color: #667eea;
+  width: 20px;
+  text-align: center;
+}
+
+/* Reports container (right column) */
+.reports-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 24px;
+  min-height: 400px;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reports-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.reports-filters {
+  display: flex;
+  gap: 10px;
+}
+
+.reports-filters select {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* Responsive for reports layout */
+@media (max-width: 900px) {
+  .main-content.reports-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .submit-panel {
+    position: static;
+  }
+  
+  /* Map layout responsive */
+  .main-content.map-layout {
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+  
+  .map-layout .sidebar {
+    position: fixed !important;
+    top: 60px;
+    left: -300px; /* Hidden by default */
+    width: 280px;
+    height: calc(100vh - 60px);
+    background: #fff;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    z-index: 2000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  
+  .map-layout .sidebar.active {
+    left: 0;
+  }
+  
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1999;
+  }
+  
+  .sidebar-backdrop.active {
+    display: block;
+  }
+  
+  .sidebar-toggle {
+    display: flex !important;
+    position: fixed;
+    top: 70px;
+    left: 10px;
+    z-index: 1500;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-size: 16px;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .sidebar-toggle:hover {
+    background: #5568d3;
+  }
+}
+
+/* Sidebar styling - only for map page */
+.map-layout .sidebar {
+  position: static !important;
+  width: 280px;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  padding: 16px 12px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Hide sidebar toggle on desktop */
+.sidebar-toggle,
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .sidebar-toggle {
+    display: none !important;
+  }
+}
+
+.map-layout .sidebar-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.map-layout .sidebar-section:last-child {
+  border-bottom: none;
+}
+
+/* Map box container - centered box layout */
+.map-box-container {
+  display: grid;
+  grid-template-columns: 240px minmax(800px, 1fr);
+  gap: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  height: calc(100vh - 140px);
+}
+
+.map-box-container .sidebar {
+  background: #f8f9fa;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+  padding: 16px;
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.map-box-container .map-container {
+  position: relative;
+  background: #f0f0f0;
+  height: 100%;
+  min-height: 500px;
+  flex: 1;
+  min-width: 0;
+}
+
+.map-box-container .map-container #map {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0;
+  left: 0;
+}
+
+/* Mobile responsive for map-box-container */
+@media (max-width: 900px) {
+  .map-box-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+    border-radius: 0;
+    max-width: 100%;
+  }
+  
+  .map-box-container .sidebar {
     width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0;
+  }
+  
+  .map-box-container .sidebar.mobile-open {
+    max-height: 50vh;
+    padding: 16px;
+    overflow-y: auto;
+  }
+  
+  .map-box-container .map-container {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  /* Compact sidebar sections for mobile */
+  .map-box-container .sidebar-section {
+    margin-bottom: 16px;
+  }
+  
+  .map-box-container .sidebar-section h3 {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  
+  /* Smaller tool buttons */
+  .map-box-container .tool-btn {
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  /* Compact legend */
+  .map-box-container .legend-item {
+    font-size: 12px;
+    gap: 6px;
+  }
+  
+  .map-box-container .legend-color {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Compact stats */
+  .map-box-container .stat-card {
+    padding: 10px;
+  }
+  
+  .map-box-container .stat-value {
+    font-size: 18px;
+  }
+  
+  .map-box-container .stat-label {
+    font-size: 11px;
+  }
+}
+
+/* Map container styling - specific for map page */
+.map-layout > .map-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  background: #fff !important;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden !important;
+  flex: none !important;
+  display: block !important;
+}
+
+.map-layout #map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 600px !important;
+  border-radius: 12px;
+  z-index: 1;
+  background: #e5e3df;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Ensure Leaflet container renders */
+.map-layout .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 600px !important;
+  background: #e5e3df;
+}
+
+/* Ensure Leaflet controls are visible */
+.map-layout .leaflet-control-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.map-layout .leaflet-control {
+  pointer-events: auto;
+}
+
+.map-layout .leaflet-top,
+.map-layout .leaflet-bottom {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.map-layout .leaflet-top {
+  top: 10px;
+}
+
+.map-layout .leaflet-bottom {
+  bottom: 10px;
+}
+
+.map-layout .leaflet-right {
+  right: 10px;
+}
+
+.map-layout .leaflet-left {
+  left: 10px;
+}
+
+/* Leaflet legend styling */
+.legend {
+  background: rgba(255,255,255,0.9);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  line-height: 1.6;
+}
+
+.legend strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .map-box {
+    height: 70vh;
+  }
+  .layout .sidebar {
+    max-height: none;
+  }
 }
 
 /* Dashboard Styles */
@@ -707,6 +1177,33 @@ body {
     overflow: hidden;
 }
 
+/* Map control buttons for preview */
+.map-control-btn {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: #667eea;
+    font-size: 16px;
+}
+
+.map-control-btn:hover {
+    background: #667eea;
+    color: white;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.map-control-btn:active {
+    transform: scale(0.95);
+}
+
 .quick-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -754,65 +1251,6 @@ body {
     font-weight: 500;
 }
 
-
-/* Sidebar Navigation for Mobile */
-@media (max-width: 900px) {
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        width: 240px;
-        z-index: 2000;
-        background: white;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.08);
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        padding-top: 60px;
-        display: flex;
-        flex-direction: column;
-    }
-    .sidebar.open {
-        transform: translateX(0);
-    }
-    .sidebar .nav-item {
-        padding: 18px 24px;
-        font-size: 18px;
-        color: #333;
-        border-bottom: 1px solid #f0f0f0;
-        background: none;
-    }
-    .sidebar .nav-item i {
-        font-size: 20px;
-    }
-    .sidebar .nav-item.active {
-        color: #667eea;
-        background: #f8f9fa;
-    }
-    .hamburger {
-        display: flex !important;
-        position: absolute;
-        left: 16px;
-        top: 12px;
-        z-index: 4000;
-        background: none;
-        color: #667eea;
-        border: none;
-        font-size: 28px;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 8px;
-        transition: background 0.2s;
-    }
-    .hamburger:active, .hamburger:focus {
-        background: #f0f0f0;
-    }
-    .navigation, .nav-container {
-        display: none !important;
-    }
-}
 
 /* Remove quick actions bar on mobile */
 @media (max-width: 900px) {
@@ -948,23 +1386,22 @@ body {
     font-size: 14px;
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles (overridden by .layout .sidebar in grid context) */
 .sidebar {
-    width: 300px;
+    width: 320px;
     background: white;
     border-right: 1px solid #e0e0e0;
     overflow-y: auto;
-    padding: 20px;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    padding: 16px;
 }
 
 .sidebar-section {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .sidebar-section h3 {
     color: #333;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     margin-bottom: 15px;
     padding-bottom: 8px;
@@ -1087,16 +1524,16 @@ body {
 .stats-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
 }
 
 .stat-card {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 15px;
-    border-radius: 8px;
+    padding: 18px 16px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     border-left: 4px solid #667eea;
 }
 
@@ -1117,10 +1554,10 @@ body {
 }
 
 .stat-value {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
     color: #333;
-    line-height: 1;
+    line-height: 1.1;
 }
 
 .stat-label {
@@ -1131,16 +1568,18 @@ body {
 
 /* Report Form Styles */
 .report-container {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 30px;
-    max-width: 1200px;
+    display: flex;
+    justify-content: center;
+    padding: 30px 20px;
     margin: 0 auto;
+    max-width: 1200px;
 }
 
 .report-form-section {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 900px;
 }
 
 .form-card {
@@ -1476,11 +1915,12 @@ body {
 }
 
 .member-photo img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
+    width: 220px;
+    height: 300px;
+    border-radius: 20px;
     object-fit: cover;
-    border: 4px solid #f0f0f0;
+    object-position: center 35%;
+    border: 5px solid #f0f0f0;
 }
 
 .team-member h3 {
@@ -1497,9 +1937,7 @@ body {
 }
 
 .member-bio {
-    color: #666;
-    line-height: 1.6;
-    margin-bottom: 20px;
+    display: none;
 }
 
 .member-social {
@@ -1773,11 +2211,16 @@ body {
     font-weight: 600;
 }
 
+.legend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .legend-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 6px;
     font-size: 13px;
     color: #666;
 }
@@ -1787,6 +2230,27 @@ body {
     height: 16px;
     border-radius: 3px;
     border: 1px solid #ddd;
+    flex-shrink: 0;
+}
+
+.legend-color.high {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.legend-color.medium {
+    background-color: #ff8c00;
+    border-color: #ff8c00;
+}
+
+.legend-color.low {
+    background-color: #ffd31a;
+    border-color: #ffd31a;
+}
+
+.legend-color.completed {
+    background-color: #28a745;
+    border-color: #28a745;
 }
 
 /* Modal Styles */
@@ -2011,6 +2475,18 @@ body {
     display: flex !important;
 }
 
+/* Hide ALL default Leaflet controls - using custom buttons */
+.leaflet-control-zoom,
+.leaflet-top.leaflet-left,
+.leaflet-top.leaflet-right .leaflet-control-zoom,
+.leaflet-bar.leaflet-control,
+.leaflet-control-container .leaflet-control-zoom {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 .leaflet-control-zoom a {
     background: white;
     border: 1px solid #ddd;
@@ -2125,7 +2601,7 @@ body {
 @media (max-width: 900px) {
     .quick-actions-menu { display: none; }
     .quick-actions-menu.open { display: flex; }
-    .sidebar { display: none !important; }
+    nav.sidebar { display: none !important; }
     .logo .desktop-logo { display: none; }
 }
 
@@ -2216,15 +2692,25 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
-    background: #fff;
+    background: white;
     border: 1px solid #ddd;
-    border-radius: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
     cursor: pointer;
     color: #666;
+    transition: all 0.3s ease;
+}
+.tools-toggle:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+.tools-toggle:hover i {
+    color: white;
 }
 .tools-toggle i {
     color: #667eea;
+    transition: color 0.3s ease;
 }
 .tools-menu {
     position: absolute;
@@ -2492,4 +2978,254 @@ body {
     /* Ensure login features keep tight alignment on small screens */
     .login-info .features .feature { grid-template-columns: 26px 1fr; column-gap: 10px; }
     .login-info .features .feature i { font-size: 20px; }
+}
+
+/* Map Toolbar (vertical left, compact) */
+.map-toolbar {
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 24px;
+  width: 136px;
+  height: auto;
+  background: rgba(255,255,255,0.96);
+  border-radius: 10px;
+  box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 8px;
+}
+.map-toolbar .sidebar-section {
+  min-width: 0; max-width: none; width: 100%; padding: 2px 2px;
+}
+.map-toolbar label, .map-toolbar select, .map-toolbar input, .map-toolbar .stat-value, .map-toolbar .stat-label, .map-toolbar .stat-content, .map-toolbar .stat-icon {
+  font-size:11px !important; line-height:1.4;
+}
+.map-toolbar .sidebar-section h3 { font-size:11px; margin-bottom:3px; color:#667eea; }
+.map-toolbar .tool-group,
+.map-toolbar .layer-controls,
+.map-toolbar .filter-controls,
+.map-toolbar .stats-grid { gap: 6px; }
+.map-toolbar .tool-btn i { font-size:13px; }
+.map-toolbar .tool-btn { padding:5.5px 6px; font-size:11px; border-radius:7px; min-width:0; }
+.map-toolbar .stat-card {
+  min-width: 0!important;
+  max-width: 60px!important;
+  padding: 6px 2px!important;
+  margin: 0;
+}
+.map-toolbar .stat-content,
+.map-toolbar .stat-icon,
+.map-toolbar .stat-label,
+.map-toolbar .stat-value { font-size:11px !important; }
+.map-toolbar .stat-icon i { font-size:12px; }
+@media (max-width: 900px) {
+  .map-toolbar {
+    top: 10px;
+    bottom: 10px;
+    left: 8px;
+    right: auto;
+    width: 92px;
+    min-width: 72px;
+    max-width: 98px;
+    padding: 4px 2px;
+    gap: 5px;
+  }
+  .map-toolbar .sidebar-section h3 { font-size:9.2px; }
+  .map-toolbar label, .map-toolbar select, .map-toolbar input, .map-toolbar .stat-value, .map-toolbar .stat-label, .map-toolbar .stat-content, .map-toolbar .stat-icon { font-size:9.4px !important; }
+  .map-toolbar .tool-btn { font-size:9.8px; min-width:0; }
+}
+
+/* ========== RESPONSIVE IMPROVEMENTS FOR MOBILE ========== */
+
+#locationMap {
+    height: 400px !important;
+    width: 100% !important;
+    min-height: 300px;
+}
+
+#mapPreview {
+    height: 300px !important;
+    width: 100% !important;
+}
+
+/* Mobile optimizations for map containers */
+@media (max-width: 768px) {
+    #map {
+        height: calc(100vh - 60px) !important; /* Account for header */
+    }
+    
+    #locationMap {
+        height: 350px !important;
+    }
+    
+    #mapPreview {
+        height: 250px !important;
+    }
+    
+    /* Dashboard grid - stack vertically on mobile */
+    .dashboard-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px;
+    }
+    
+    .dashboard-card {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Stats section - responsive grid */
+    .stats-section {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+    
+    .stat-card {
+        padding: 16px 12px !important;
+    }
+    
+    .stat-value {
+        font-size: 24px !important;
+    }
+    
+    .stat-label {
+        font-size: 12px !important;
+    }
+    
+    /* Report container - stack form and map */
+    .report-container {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .report-form-section,
+    .map-section {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Form improvements */
+    .form-row {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px;
+    }
+    
+    .form-group {
+        width: 100% !important;
+    }
+    
+    /* Priority list and report list */
+    .priority-list,
+    .report-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px;
+    }
+    
+    .priority-item,
+    .report-item {
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 12px !important;
+    }
+    
+    /* Map legend responsive positioning */
+    .map-legend {
+        bottom: 20px !important;
+        right: 10px !important;
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .map-legend h4 {
+        font-size: 13px !important;
+    }
+    
+    .legend-item span {
+        font-size: 11px !important;
+    }
+}
+
+/* Extra small devices (phones, 360px and down) */
+@media (max-width: 480px) {
+    .stats-section {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .stat-card {
+        padding: 14px 10px !important;
+    }
+    
+    #locationMap {
+        height: 300px !important;
+    }
+    
+    /* Compact buttons on small screens */
+    .btn-primary,
+    .btn-secondary {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Map controls positioning */
+    .map-controls {
+        right: 8px !important;
+        bottom: 80px !important;
+    }
+    
+    .map-control-btn {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Notification positioning for mobile */
+    #locationSelectNotif {
+        top: 70px !important;
+        left: 10px !important;
+        right: 10px !important;
+        transform: none !important;
+        font-size: 13px !important;
+        padding: 10px 16px !important;
+    }
+}
+
+/* Ensure map fills container properly */
+.map-container {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.map-container-small {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Fix for Leaflet map rendering issues */
+.leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+/* Responsive card content */
+@media (max-width: 768px) {
+    .card-content {
+        padding: 16px !important;
+    }
+    
+    .card-header h3 {
+        font-size: 18px !important;
+    }
+    
+    .card-header p {
+        font-size: 13px !important;
+    }
 }

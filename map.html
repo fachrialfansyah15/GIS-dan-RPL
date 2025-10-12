@@ -82,8 +82,9 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Sidebar -->
-            <aside class="sidebar">
+            <div class="map-box-container">
+                <!-- Sidebar -->
+                <aside class="sidebar">
                 <div class="sidebar-section">
                     <h3>Alat Peta</h3>
                     <div class="tool-group">
@@ -125,28 +126,41 @@
                             <label>Tipe Kerusakan</label>
                             <select id="damageType">
                                 <option value="all">Semua Tipe</option>
-                                <option value="Minor Damage">Kerusakan Ringan</option>
-                                <option value="Medium Damage">Kerusakan Sedang</option>
-                                <option value="Severe Damage">Kerusakan Berat</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Prioritas</label>
-                            <select id="priority">
-                                <option value="all">Semua Prioritas</option>
-                                <option value="high">Tinggi</option>
-                                <option value="medium">Sedang</option>
-                                <option value="low">Rendah</option>
+                                <option value="Rusak Ringan">Rusak Ringan</option>
+                                <option value="Rusak Sedang">Rusak Sedang</option>
+                                <option value="Rusak Berat">Rusak Berat</option>
                             </select>
                         </div>
                         <div class="filter-group">
                             <label>Status</label>
-                            <select id="status">
+                            <select id="statusFilter">                                
                                 <option value="all">Semua Status</option>
                                 <option value="reported">Dilaporkan</option>
                                 <option value="in_progress">Sedang Diproses</option>
                                 <option value="completed">Selesai</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Legenda</h3>
+                    <div class="legend-list">
+                        <div class="legend-item">
+                            <div class="legend-color high"></div>
+                            <span>Prioritas Tinggi</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color medium"></div>
+                            <span>Prioritas Sedang</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color low"></div>
+                            <span>Prioritas Rendah</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color completed"></div>
+                            <span>Selesai</span>
                         </div>
                     </div>
                 </div>
@@ -159,7 +173,7 @@
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">24</div>
+                                <div class="stat-value" id="statActive">0</div>
                                 <div class="stat-label">Laporan Aktif</div>
                             </div>
                         </div>
@@ -168,7 +182,7 @@
                                 <i class="fas fa-tools"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">8</div>
+                                <div class="stat-value" id="statProcessing">0</div>
                                 <div class="stat-label">Sedang Diproses</div>
                             </div>
                         </div>
@@ -177,7 +191,7 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-value">156</div>
+                                <div class="stat-value" id="statCompleted">0</div>
                                 <div class="stat-label">Selesai</div>
                             </div>
                         </div>
@@ -187,7 +201,7 @@
 
             <!-- Map Container -->
             <main class="map-container">
-                <div id="map" style="height: 100vh; width: 100%;"></div>
+                <div id="map" style="height: 100%; width: 100%;"></div>
                 
                 <!-- Map Controls -->
                 <div class="map-controls">
@@ -220,35 +234,12 @@
                     <button class="map-control-btn" id="zoomOut" title="Zoom Out">
                         <i class="fas fa-minus"></i>
                     </button>
-                    <button class="map-control-btn" id="fullscreen" title="Fullscreen">
-                        <i class="fas fa-expand"></i>
-                    </button>
-                    <button class="map-control-btn" id="locate" title="My Location">
+                    <button class="map-control-btn" id="locate" title="Lokasi Anda Saat Ini">
                         <i class="fas fa-crosshairs"></i>
                     </button>
                 </div>
-
-                <!-- Map Legend -->
-                <div class="map-legend">
-                    <h4>Legenda</h4>
-                    <div class="legend-item">
-                        <div class="legend-color high"></div>
-                        <span>Prioritas Tinggi</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color medium"></div>
-                        <span>Prioritas Sedang</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color low"></div>
-                        <span>Prioritas Rendah</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color completed"></div>
-                        <span>Selesai</span>
-                    </div>
-                </div>
             </main>
+            </div><!-- .map-box-container -->
         </div>
     </div>
 
@@ -298,15 +289,14 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="auth.js"></script>
     <script>
-        // Share Supabase constants globally
         window.SUPABASE_URL = 'https://cxcxatowzymfpasesrvp.supabase.co';
         window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4Y3hhdG93enltZnBhc2VzcnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTY0MDIsImV4cCI6MjA3NTU5MjQwMn0.klPbBM_u-UvlG5DTMmZxRIXuczpqqLfupJUZW0gMRa0';
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="map.js"></script>
-</body>
-</html>
-
+</body></html>

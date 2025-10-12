@@ -46,10 +46,10 @@ class Dashboard {
 
 
     initializeMapPreview() {
-        // Initialize small map for dashboard preview
+        // Initialize small map for dashboard preview - centered on Palu
         this.map = L.map('mapPreview', {
-            center: [-0.8966, 120.9],
-            zoom: 8,
+            center: [-0.898, 119.870], // Kota Palu coordinates
+            zoom: 13,
             zoomControl: false,
             attributionControl: false
         });
@@ -125,7 +125,13 @@ class Dashboard {
             });
         }
 
-        // Removed exportData method and all export references
+        // View Full Map button handler
+        const viewFullMapBtn = document.getElementById('viewFullMapBtn');
+        if (viewFullMapBtn) {
+            viewFullMapBtn.addEventListener('click', () => {
+                window.location.href = 'map.html';
+            });
+        }
 
         // Notification button
         const notificationBtn = document.getElementById('notificationsBtn');
@@ -191,25 +197,56 @@ class Dashboard {
     }
 
     async updateStatistics() {
-        let totalMasuk = 0;
-        let totalSetuju = 0;
-        let totalTolak = 0;
+        // Fetch statistics from Supabase tables
+        let totalLaporanAktif = 0;
+        let totalSedangDiproses = 0;
+        let totalSelesai = 0;
+        
         if (this.supabase) {
             try {
-                let resp = await this.supabase.from('laporan_masuk').select('status');
-                if (!resp.error && Array.isArray(resp.data)) {
-                    totalMasuk = resp.data.length;
-                    totalTolak = resp.data.filter(r => (r.status||'').toLowerCase() === 'ditolak').length;
+                // Get data from jalan_rusak table and count by category
+                let { data: jalanRusak, error } = await this.supabase.from('jalan_rusak').select('jenis_kerusakan');
+                
+                if (!error && Array.isArray(jalanRusak)) {
+                    // Count by damage severity (ringan, sedang, berat)
+                    const ringan = jalanRusak.filter(r => 
+                        (r.jenis_kerusakan || '').toLowerCase().includes('ringan') || 
+                        (r.jenis_kerusakan || '').toLowerCase().includes('minor')
+                    ).length;
+                    
+                    const sedang = jalanRusak.filter(r => 
+                        (r.jenis_kerusakan || '').toLowerCase().includes('sedang') || 
+                        (r.jenis_kerusakan || '').toLowerCase().includes('medium')
+                    ).length;
+                    
+                    const berat = jalanRusak.filter(r => 
+                        (r.jenis_kerusakan || '').toLowerCase().includes('berat') || 
+                        (r.jenis_kerusakan || '').toLowerCase().includes('severe')
+                    ).length;
+                    
+                    // Set statistics based on actual data
+                    totalLaporanAktif = jalanRusak.length; // Total reports
+                    totalSedangDiproses = sedang; // Medium damage as "being processed"
+                    totalSelesai = ringan; // Light damage as "completed"
                 }
-                let jalan_rusak = await this.supabase.from('jalan_rusak').select('id');
-                if (!jalan_rusak.error && Array.isArray(jalan_rusak.data)) {
-                    totalSetuju = jalan_rusak.data.length;
+                
+                // Also check laporan_masuk for pending reports
+                let { data: laporanMasuk } = await this.supabase.from('laporan_masuk').select('status');
+                if (laporanMasuk && Array.isArray(laporanMasuk)) {
+                    const pending = laporanMasuk.filter(r => 
+                        (r.status || '').toLowerCase() !== 'ditolak'
+                    ).length;
+                    totalLaporanAktif += pending;
                 }
-            } catch (_) {}
+            } catch (err) {
+                console.error('Error fetching statistics:', err);
+            }
         }
-        this.animateStatCard('.stat-card:nth-child(1) .stat-value', totalMasuk);
-        this.animateStatCard('.stat-card:nth-child(2) .stat-value', totalSetuju);
-        this.animateStatCard('.stat-card:nth-child(3) .stat-value', totalTolak);
+        
+        // Animate stat cards with real data
+        this.animateStatCard('.stat-card:nth-child(1) .stat-value', totalLaporanAktif);
+        this.animateStatCard('.stat-card:nth-child(2) .stat-value', totalSedangDiproses);
+        this.animateStatCard('.stat-card:nth-child(3) .stat-value', totalSelesai);
     }
 
     animateStatCard(selector, value) {
@@ -230,75 +267,179 @@ class Dashboard {
         }
     }
 
-    loadRecentReports() {
-        // Recent reports are already in HTML, but we can add dynamic updates here
-        const reportItems = document.querySelectorAll('.report-item');
-        reportItems.forEach((item, index) => {
-            // Add click handler for report items
-            item.addEventListener('click', () => {
-                this.showReportDetails(index);
-            });
-        });
-    }
-
-    loadPriorityAreas() {
-        // Priority areas are already in HTML, but we can add dynamic updates here
-        const priorityItems = document.querySelectorAll('.priority-item');
-        priorityItems.forEach((item, index) => {
-            // Add click handler for priority items
-            item.addEventListener('click', () => {
-                this.showAreaDetails(index);
-            });
-        });
-    }
-
-    showReportDetails(reportIndex) {
-        const reports = [
-            {
-                id: 'RPT-001',
-                title: 'Pothole on Jl. Sudirman',
-                description: 'Large pothole causing traffic disruption',
-                reporter: 'John Doe',
-                priority: 'High',
-                status: 'Reported',
-                date: '2 hours ago'
-            },
-            {
-                id: 'RPT-002',
-                title: 'Cracked Road Surface',
-                description: 'Multiple cracks on Jl. Ahmad Yani',
-                reporter: 'Jane Smith',
-                priority: 'Medium',
-                status: 'Reported',
-                date: '5 hours ago'
-            },
-            {
-                id: 'RPT-003',
-                title: 'Missing Road Sign',
-                description: 'Stop sign missing at intersection',
-                reporter: 'Mike Johnson',
-                priority: 'Low',
-                status: 'Reported',
-                date: '1 day ago'
+    async loadRecentReports() {
+        // Ambil data laporan terbaru dari Supabase
+        if (!this.supabase) {
+            console.warn('[dashboard.js] Supabase not initialized');
+            return;
+        }
+        
+        try {
+            // Ambil 5 laporan terbaru dari tabel jalan_rusak, urutkan berdasarkan tanggal_survey
+            const { data, error } = await this.supabase
+                .from('jalan_rusak')
+                .select('*')
+                .order('tanggal_survey', { ascending: false })
+                .limit(5);
+            
+            if (error) {
+                console.error('[dashboard.js] Error fetching recent reports:', error);
+                return;
             }
-        ];
-
-        const report = reports[reportIndex];
-        if (report) {
-            alert(`Report Details:\n\nID: ${report.id}\nTitle: ${report.title}\nDescription: ${report.description}\nReporter: ${report.reporter}\nPriority: ${report.priority}\nStatus: ${report.status}\nDate: ${report.date}`);
+            
+            if (data && data.length > 0) {
+                this.renderRecentReports(data);
+            }
+        } catch (err) {
+            console.error('[dashboard.js] Exception loading recent reports:', err);
         }
     }
+    
+    renderRecentReports(reports) {
+        const reportList = document.querySelector('.report-list');
+        if (!reportList) return;
+        
+        // Kosongkan list yang ada
+        reportList.innerHTML = '';
+        
+        // Render setiap laporan
+        reports.forEach((report, index) => {
+            const reportItem = document.createElement('div');
+            reportItem.className = 'report-item';
+            
+            // Tentukan prioritas berdasarkan jenis kerusakan
+            let priority = 'low';
+            let priorityText = 'Prioritas Rendah';
+            const jenisKerusakan = (report.jenis_kerusakan || '').toLowerCase();
+            
+            if (jenisKerusakan.includes('berat') || jenisKerusakan.includes('severe')) {
+                priority = 'high';
+                priorityText = 'Prioritas Tinggi';
+            } else if (jenisKerusakan.includes('sedang') || jenisKerusakan.includes('medium')) {
+                priority = 'medium';
+                priorityText = 'Prioritas Sedang';
+            }
+            
+            // Icon berdasarkan jenis kerusakan
+            let icon = 'fa-road';
+            if (jenisKerusakan.includes('lubang') || jenisKerusakan.includes('pothole')) {
+                icon = 'fa-exclamation-triangle';
+            }
+            
+            reportItem.innerHTML = `
+                <div class="report-icon ${priority}">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="report-details">
+                    <h4>${report.nama_jalan || 'Jalan Tidak Diketahui'}</h4>
+                    <p>${report.jenis_kerusakan || 'Kerusakan tidak dispesifikasi'}</p>
+                    <span class="report-meta">Survei: ${report.tanggal_survey || 'Tanggal tidak tersedia'}</span>
+                </div>
+                <div class="report-status ${priority}">${priorityText}</div>
+            `;
+            
+            // Add click handler
+            reportItem.addEventListener('click', () => {
+                this.showReportDetailsFromData(report);
+            });
+            
+            reportList.appendChild(reportItem);
+        });
+    }
 
-    showAreaDetails(areaIndex) {
-        const areas = [
-            'Jl. Sudirman - 5 active reports',
-            'Jl. Ahmad Yani - 3 active reports',
-            'Jl. Gatot Subroto - 2 active reports'
-        ];
-
-        const area = areas[areaIndex];
-        if (area) {
-            alert(`Area Details:\n\n${area}\n\nClick "View Full Map" to see detailed information.`);
+    async loadPriorityAreas() {
+        // Ambil data dari jalan_rusak dan hitung frekuensi nama jalan
+        if (!this.supabase) {
+            console.warn('[dashboard.js] Supabase not initialized');
+            return;
         }
+        
+        try {
+            const { data, error } = await this.supabase
+                .from('jalan_rusak')
+                .select('nama_jalan');
+            
+            if (error) {
+                console.error('[dashboard.js] Error fetching priority areas:', error);
+                return;
+            }
+            
+            if (data && data.length > 0) {
+                // Hitung frekuensi kemunculan setiap nama jalan
+                const frequency = {};
+                data.forEach(row => {
+                    const namaJalan = row.nama_jalan || 'Tidak Diketahui';
+                    frequency[namaJalan] = (frequency[namaJalan] || 0) + 1;
+                });
+                
+                // Urutkan berdasarkan frekuensi (terbanyak dulu)
+                const sortedAreas = Object.entries(frequency)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5); // Ambil top 5
+                
+                this.renderPriorityAreas(sortedAreas);
+            }
+        } catch (err) {
+            console.error('[dashboard.js] Exception loading priority areas:', err);
+        }
+    }
+    
+    renderPriorityAreas(areas) {
+        const priorityList = document.querySelector('.priority-list');
+        if (!priorityList) return;
+        
+        // Kosongkan list yang ada
+        priorityList.innerHTML = '';
+        
+        // Render setiap area prioritas
+        areas.forEach(([namaJalan, count], index) => {
+            const priorityItem = document.createElement('div');
+            priorityItem.className = 'priority-item';
+            
+            // Tentukan level prioritas berdasarkan jumlah laporan
+            let level = 'low';
+            if (count >= 5) level = 'high';
+            else if (count >= 3) level = 'medium';
+            
+            priorityItem.innerHTML = `
+                <div class="priority-bar ${level}"></div>
+                <div class="priority-info">
+                    <h4>${namaJalan}</h4>
+                    <p>${count} laporan aktif</p>
+                </div>
+            `;
+            
+            priorityItem.addEventListener('click', () => {
+                alert(`Area Prioritas: ${namaJalan}\n${count} laporan kerusakan tercatat.\n\nKlik "Lihat Peta Lengkap" untuk detail lokasi.`);
+            });
+            
+            priorityList.appendChild(priorityItem);
+        });
+    }
+
+    showReportDetailsFromData(report) {
+        // Tampilkan detail laporan dari data Supabase
+        const details = `
+Detail Laporan Kerusakan Jalan
+
+Nama Jalan: ${report.nama_jalan || '-'}
+Jenis Kerusakan: ${report.jenis_kerusakan || '-'}
+Tanggal Survey: ${report.tanggal_survey || '-'}
+Koordinat: ${report.Latitude || '-'}, ${report.Longitude || '-'}
+
+Klik "Lihat Peta Lengkap" untuk melihat lokasi di peta.
+        `;
+        alert(details);
+    }
+
+
+    showNotifications() {
+        // Placeholder for notifications feature
+        alert('Notifikasi: Anda memiliki 3 laporan baru yang perlu ditinjau.');
     }
 }
+
+// Initialize dashboard when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    new Dashboard();
+});

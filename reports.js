@@ -71,10 +71,6 @@ class ReportsPage {
                     <i class="fas fa-clipboard-list"></i>
                     <h3>No Reports Found</h3>
                     <p>No road damage reports have been submitted yet.</p>
-                    <a href="report.html" class="btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Submit First Report
-                    </a>
                 </div>
             `;
             return;
@@ -473,27 +469,8 @@ reportsStyles.textContent = `
     }
 
     .no-reports p {
-        margin: 0 0 30px 0;
+        margin: 0 0 15px 0;
         font-size: 16px;
-    }
-
-    .no-reports .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: transform 0.3s ease;
-    }
-
-    .no-reports .btn-primary:hover {
-        transform: translateY(-2px);
     }
 
     @keyframes slideIn {

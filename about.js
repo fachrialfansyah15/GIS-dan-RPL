@@ -315,9 +315,9 @@ class AboutPage {
                 'OpenStreetMap'
             ],
             team: [
-                'John Doe - Lead Developer',
-                'Jane Smith - GIS Specialist',
-                'Mike Johnson - UI/UX Designer'
+                'Fachri Alfansyah - Developer',
+                'Ray Agung - GIS Specialist',
+                'Auralia Zalsabillah - UI/UX Designer'
             ],
             contact: {
                 email: 'info@roadmonitorpalu.com',

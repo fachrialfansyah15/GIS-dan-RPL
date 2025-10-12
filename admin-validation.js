@@ -1,691 +1,120 @@
-// Admin Report Validation functionality for Road Monitor Palu
-
-class AdminValidation {
-    constructor() {
-        this.map = null;
-        this.pendingReports = [];
-        this.selectedReport = null;
-        this.supabase = null; // Tambahkan properti supabase
-        this.init();
-    }
-
-    init() {
-        this.checkAuth();
-        this.initializeMap();
-        this.setupEventListeners();
-        this.loadPendingReports();
-    }
-
-    checkAuth() {
-        // Wait for auth to be available
-        if (!window.auth) {
-            setTimeout(() => this.checkAuth(), 100);
-            return;
-        }
-
-        if (!window.auth.isAuthenticated() || !window.auth.isUserAdmin()) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        // Update user info in header
-        const userName = document.getElementById('userName');
-        if (userName) {
-            userName.textContent = window.auth.getCurrentUser();
-        }
-    }
-
-    initializeMap() {
-        // Initialize map for validation
-        this.map = L.map('validationMap', {
-            center: [-0.8966, 119.8756], // Palu City coordinates
-            zoom: 13,
-            zoomControl: false
-        });
-
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(this.map);
-    }
-
-    setupEventListeners() {
-        // Logout functionality
-        const logoutLink = document.getElementById('logoutLink');
-        if (logoutLink) {
-            logoutLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.auth.logout();
-            });
-        }
-
-        // Validation modal
-        const modal = document.getElementById('validationModal');
-        const closeBtn = modal.querySelector('.close');
-        const approveBtn = document.getElementById('approveReport');
-        const rejectBtn = document.getElementById('rejectReport');
-
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-
-        approveBtn.addEventListener('click', () => {
-            this.validateReport('approved');
-        });
-
-        rejectBtn.addEventListener('click', () => {
-            this.validateReport('rejected');
-        });
-
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    }
-
-    async loadPendingReports() {
-        // Ambil laporan dari Supabase (bukan localStorage)
-        if (!this.supabase) {
-            this.initializeSupabase && this.initializeSupabase();
-            if (!this.supabase) return;
-        }
-        try {
-            const { data, error } = await this.supabase.from('laporan_masuk').select('*').eq('status', 'menunggu');
-            this.pendingReports = (!error && Array.isArray(data)) ? data : [];
-        } catch (e) {
-            this.pendingReports = [];
-        }
-        this.updateStats();
-        this.displayPendingReports();
-    }
-
-    async updateStats() {
-        // Ambil statistik validasi dari tabel Supabase
-        let pending = 0, approved = 0, rejected = 0;
-        if (this.supabase) {
-            try {
-                let result = await this.supabase.from('laporan_masuk').select('status');
-                if (!result.error && Array.isArray(result.data)) {
-                    pending = result.data.filter(r => (r.status||'').toLowerCase() === 'menunggu').length;
-                    approved = result.data.filter(r => (r.status||'').toLowerCase() === 'approved').length;
-                    rejected = result.data.filter(r => (r.status||'').toLowerCase() === 'ditolak').length;
-                }
-            } catch(_){}
-        }
-        document.getElementById('pendingCount').textContent = pending;
-        document.getElementById('approvedCount').textContent = approved;
-        document.getElementById('rejectedCount').textContent = rejected;
-    }
-
-    displayPendingReports() {
-        const reportsList = document.getElementById('pendingReportsList');
-        if (this.pendingReports.length === 0) {
-            reportsList.innerHTML = `
-                <div class="no-reports">
-                    <i class="fas fa-check-circle"></i>
-                    <h3>No Pending Reports</h3>
-                    <p>All reports have been validated!</p>
-                </div>
-            `;
-            return;
-        }
-        reportsList.innerHTML = this.pendingReports.map(report => `
-            <div class="report-card pending" data-report-id="${report.id}">
-                <div class="report-header">
-                    <div class="report-id">${report.kode_titik_jalan}</div>
-                </div>
-                <div class="report-content">
-                    <h4>${report.jenis_kerusakan}</h4>
-                    <p class="report-location">
-                        <i class="fas fa-map-marker-alt"></i>
-                        ${report.nama_jalan}
-                    </p>
-                    <div class="report-meta">
-                        <span class="report-date">
-                            <i class="fas fa-clock"></i>
-                            ${report.tanggal_survey}
-                        </span>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn-secondary" onclick="adminValidation.viewReportOnMap('${report.id}')">
-                        <i class="fas fa-map-marker-alt"></i>
-                        View on Map
-                    </button>
-                    <button class="btn-primary" onclick="adminValidation.openValidationModal('${report.id}')">
-                        <i class="fas fa-gavel"></i>
-                        Validate
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    viewReportOnMap(reportId) {
-        const report = this.pendingReports.find(r => r.id == reportId);
-        if (report && report.Latitude && report.Longitude) {
-            // Clear existing markers
-            this.map.eachLayer(layer => {
-                if (layer instanceof L.Marker) {
-                    this.map.removeLayer(layer);
-                }
-            });
-            // Add report marker
-            const marker = L.marker([report.Latitude, report.Longitude], {
-                icon: L.divIcon({
-                    className: 'validation-marker',
-                    html: `<i class='fas fa-exclamation-triangle' style='color: #dc3545; font-size: 20px;'></i>`,
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                })
-            }).addTo(this.map);
-            marker.bindPopup(`<div class='validation-popup'><h4>${report.jenis_kerusakan}</h4><p><strong>Location:</strong> ${report.nama_jalan}</p></div>`).openPopup();
-            this.map.setView([report.Latitude, report.Longitude], 15);
-        }
-    }
-
-    openValidationModal(reportId) {
-        const report = this.pendingReports.find(r => r.id == reportId);
-        if (!report) return;
-        this.selectedReport = report;
-        const modal = document.getElementById('validationModal');
-        const detailsContainer = document.getElementById('validationReportDetails');
-        detailsContainer.innerHTML = `
-            <div class='validation-report-info'>
-                <div class='info-row'><span class='label'>Report ID:</span><span class='value'>${report.kode_titik_jalan}</span></div>
-                <div class='info-row'><span class='label'>Damage Type:</span><span class='value'>${report.jenis_kerusakan}</span></div>
-                <div class='info-row'><span class='label'>Location:</span><span class='value'>${report.nama_jalan}</span></div>
-                <div class='info-row'><span class='label'>Date:</span><span class='value'>${report.tanggal_survey}</span></div>
-            </div>
-        `;
-        modal.style.display = 'block';
-    }
-
-    async validateReport(decision) {
-        if (!this.selectedReport) return;
-        if (!this.supabase) this.initializeSupabase && this.initializeSupabase();
-        if (!this.supabase) return;
-        const report = this.selectedReport;
-        if (decision === 'approved') {
-            // Pindahkan ke jalan_rusak (insert semua kolom)
-            const newRow = { ...report };
-            delete newRow.id; // biar auto-increment id baru di jalan_rusak
-            // insert
-            await this.supabase.from('jalan_rusak').insert([newRow]);
-            // update laporan_masuk ke status 'approved'
-            await this.supabase.from('laporan_masuk').update({ status: 'approved' }).eq('id', report.id);
-            this.showMessage('Report approved successfully!', 'success');
-        } else {
-            // Tolak: update status ke "ditolak"
-            await this.supabase.from('laporan_masuk').update({ status: 'ditolak' }).eq('id', report.id);
-            this.showMessage('Report rejected.', 'info');
-        }
-        document.getElementById('validationModal').style.display = 'none';
-        // Refresh
-        await this.loadPendingReports();
-    }
-
-    showMessage(message, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `validation-message ${type}`;
-        messageDiv.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-        `;
-
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideIn 0.3s ease;
-            ${type === 'success' ? 'background: #28a745;' : 'background: #17a2b8;'}
-        `;
-
-        document.body.appendChild(messageDiv);
-
-        setTimeout(() => {
-            messageDiv.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.parentNode.removeChild(messageDiv);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    // Tambahkan fungsi this.initializeSupabase (sama dengan dashboard.js)
-    initializeSupabase() {
-        if (window.supabase && window.supabase.createClient) {
-            const supabase_url = window.SUPABASE_URL;
-            const supabase_key = window.SUPABASE_KEY;
-            this.supabase = (supabase_url && supabase_key) ? window.supabase.createClient(supabase_url, supabase_key) : null;
-        } else {
-            this.supabase = null;
-        }
-    }
+// Use global Supabase config (set in HTML) to avoid duplicate declarations
+const supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+if (!supabaseClient) {
+  console.error('[admin-validation] Supabase client not initialized');
 }
 
-// Initialize admin validation when DOM is loaded
-let adminValidation;
-document.addEventListener('DOMContentLoaded', () => {
-    adminValidation = new AdminValidation();
-});
-
-// Add admin validation styles
-const adminValidationStyles = document.createElement('style');
-adminValidationStyles.textContent = `
-    .admin-validation-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    .validation-header {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid #f0f0f0;
-    }
-
-    .validation-header h2 {
-        color: #333;
-        font-size: 28px;
-        font-weight: 600;
-        margin: 0 0 20px 0;
-    }
-
-    .validation-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        text-align: center;
-        transition: transform 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .stat-card i {
-        font-size: 24px;
-        margin-bottom: 10px;
-        display: block;
-    }
-
-    .stat-card i.fa-clock {
-        color: #ffc107;
-    }
-
-    .stat-card i.fa-check-circle {
-        color: #28a745;
-    }
-
-    .stat-card i.fa-times-circle {
-        color: #dc3545;
-    }
-
-    .stat-number {
-        display: block;
-        font-size: 32px;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 5px;
-    }
-
-    .stat-label {
-        color: #666;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .validation-content {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 30px;
-    }
-
-    .pending-reports h3 {
-        color: #333;
-        font-size: 20px;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .reports-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        max-height: 600px;
-        overflow-y: auto;
-    }
-
-    .report-card.pending {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        overflow: hidden;
-        border-left: 4px solid #ffc107;
-    }
-
-    .report-card .report-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 20px;
-        background: #fff9e6;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .report-card .report-id {
-        font-weight: 600;
-        color: #667eea;
-        font-size: 14px;
-    }
-
-    .report-card .report-priority {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-        text-transform: uppercase;
-    }
-
-    .report-card .report-priority.high {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    .report-card .report-priority.medium {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    .report-card .report-priority.low {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .report-card .report-content {
-        padding: 20px;
-    }
-
-    .report-card .report-content h4 {
-        margin: 0 0 10px 0;
-        color: #333;
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-    .report-card .report-location {
-        margin: 0 0 10px 0;
-        color: #666;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .report-card .report-location i {
-        color: #667eea;
-    }
-
-    .report-card .report-description {
-        margin: 0 0 15px 0;
-        color: #555;
-        line-height: 1.5;
-        font-size: 14px;
-    }
-
-    .report-card .report-meta {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-
-    .report-card .report-date,
-    .report-card .report-reporter {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 12px;
-        color: #666;
-    }
-
-    .report-card .report-actions {
-        padding: 15px 20px;
-        background: #f8f9fa;
-        border-top: 1px solid #e0e0e0;
-        display: flex;
-        gap: 10px;
-    }
-
-    .report-card .report-actions button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .report-card .report-actions .btn-primary {
-        background: #667eea;
-        color: white;
-    }
-
-    .report-card .report-actions .btn-primary:hover {
-        background: #5a6fd8;
-    }
-
-    .report-card .report-actions .btn-secondary {
-        background: #f8f9fa;
-        color: #666;
-        border: 1px solid #ddd;
-    }
-
-    .report-card .report-actions .btn-secondary:hover {
-        background: #e9ecef;
-    }
-
-    .validation-map {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        overflow: hidden;
-    }
-
-    .validation-map h3 {
-        color: #333;
-        font-size: 18px;
-        margin: 0;
-        padding: 20px;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    #validationMap {
-        height: 400px;
-        width: 100%;
-    }
-
-    .map-instructions {
-        padding: 15px 20px;
-        background: #f8f9fa;
-        border-top: 1px solid #e0e0e0;
-    }
-
-    .map-instructions p {
-        margin: 0;
-        color: #666;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .map-instructions i {
-        color: #667eea;
-    }
-
-    .validation-marker {
-        background: none !important;
-        border: none !important;
-    }
-
-    .validation-popup {
-        min-width: 200px;
-    }
-
-    .validation-popup h4 {
-        margin: 0 0 10px 0;
-        color: #333;
-        font-size: 16px;
-    }
-
-    .validation-popup p {
-        margin: 5px 0;
-        font-size: 14px;
-        color: #666;
-    }
-
-    .validation-report-info {
-        padding: 20px 0;
-    }
-
-    .info-row {
-        display: flex;
-        margin-bottom: 15px;
-        align-items: flex-start;
-    }
-
-    .info-row .label {
-        font-weight: 600;
-        color: #333;
-        min-width: 120px;
-        margin-right: 15px;
-    }
-
-    .info-row .value {
-        color: #666;
-        flex: 1;
-    }
-
-    .info-row .value.priority-high {
-        color: #dc3545;
-        font-weight: 600;
-    }
-
-    .info-row .value.priority-medium {
-        color: #ffc107;
-        font-weight: 600;
-    }
-
-    .info-row .value.priority-low {
-        color: #28a745;
-        font-weight: 600;
-    }
-
-    .validation-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        padding: 20px 0;
-        border-top: 1px solid #e0e0e0;
-        margin-top: 20px;
-    }
-
-    .btn-approve,
-    .btn-reject {
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-approve {
-        background: #28a745;
-        color: white;
-    }
-
-    .btn-approve:hover {
-        background: #218838;
-        transform: translateY(-2px);
-    }
-
-    .btn-reject {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-reject:hover {
-        background: #c82333;
-        transform: translateY(-2px);
-    }
-
-    .no-reports {
-        text-align: center;
-        padding: 60px 20px;
-        color: #666;
-    }
-
-    .no-reports i {
-        font-size: 64px;
-        color: #28a745;
-        margin-bottom: 20px;
-    }
-
-    .no-reports h3 {
-        margin: 0 0 10px 0;
-        color: #333;
-        font-size: 24px;
-    }
-
-    .no-reports p {
-        margin: 0;
-        font-size: 16px;
-    }
-
-    .admin-only {
-        display: none !important;
-    }
-
-    @media (max-width: 768px) {
-        .validation-content {
-            grid-template-columns: 1fr;
-        }
-        
-        .validation-stats {
-            grid-template-columns: 1fr;
-        }
-    }
-`;
-document.head.appendChild(adminValidationStyles);
-
+// Guard: Only allow admins
+function assertAdminOrRedirect() {
+  const isAdmin = !!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin());
+  if (!isAdmin) {
+    alert('Akses ditolak. Hanya admin yang dapat melakukan validasi laporan.');
+    // Optional: redirect to dashboard
+    try { window.location.href = 'dashboard.html'; } catch (_) {}
+    return false;
+  }
+  return true;
+}
+
+// === INISIALISASI PETA ===
+const map = L.map("validationMap").setView([-0.898, 119.870], 13);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap kontributor"
+}).addTo(map);
+
+let markersLayer = L.layerGroup().addTo(map);
+
+// === MUAT DATA LAPORAN YANG BELUM DIVALIDASI ===
+async function loadPendingReports() {
+  if (!assertAdminOrRedirect()) return;
+  const { data, error } = await supabaseClient
+    .from("jalan_rusak")
+    .select("*")
+    .eq("status", "pending");
+
+  if (error) {
+    console.error("Gagal memuat data:", error);
+    alert("Terjadi kesalahan saat mengambil data laporan.");
+    return;
+  }
+
+  const tableBody = document.getElementById("validationBody");
+  tableBody.innerHTML = "";
+  markersLayer.clearLayers();
+
+  if (data.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center; color:gray;">
+          Tidak ada laporan yang menunggu validasi.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  data.forEach((laporan) => {
+    const row = document.createElement("tr");
+    // foto_jalan di DB bisa berupa URL penuh atau hanya nama file
+    let fotoURL = null;
+    if (laporan.foto_jalan) {
+      const raw = String(laporan.foto_jalan).trim();
+      if (raw.startsWith('http')) {
+        fotoURL = raw;
+      } else if (window.SUPABASE_URL) {
+        // Build public URL (assumes bucket is public)
+        fotoURL = `${window.SUPABASE_URL}/storage/v1/object/public/foto_jalan/${raw}`;
+      }
+    }
+
+    row.innerHTML = `
+      <td>${laporan.id}</td>
+      <td>${new Date(laporan.created_at).toLocaleString("id-ID")}</td>
+      <td>${laporan.nama_jalan}</td>
+      <td>${laporan.jenis_kerusakan}</td>
+      <td>
+        ${fotoURL ? `<img src="${fotoURL}" alt="Foto Jalan" style="width: 80px; border-radius: 6px;" onerror="this.style.display='none';">` : '-'}
+      </td>
+      <td>${laporan.Latitude}</td>
+      <td>${laporan.Longitude}</td>
+      <td>
+        <button class="approve-btn" data-id="${laporan.id}">Setujui</button>
+        <button class="reject-btn" data-id="${laporan.id}">Tolak</button>
+      </td>
+    `;
+
+    tableBody.appendChild(row);
+
+    const marker = L.marker([laporan.Latitude, laporan.Longitude])
+      .bindPopup(`<b>${laporan.nama_jalan}</b><br>${laporan.jenis_kerusakan}`)
+      .addTo(markersLayer);
+  });
+
+  // === EVENT UNTUK TOMBOL SETUJUI / TOLAK ===
+  document.querySelectorAll(".approve-btn").forEach((btn) =>
+    btn.addEventListener("click", () => ubahStatusLaporan(btn.dataset.id, "disetujui"))
+  );
+
+  document.querySelectorAll(".reject-btn").forEach((btn) =>
+    btn.addEventListener("click", () => ubahStatusLaporan(btn.dataset.id, "ditolak"))
+  );
+}
+
+// === UPDATE STATUS LAPORAN ===
+async function ubahStatusLaporan(id, statusBaru) {
+  if (!assertAdminOrRedirect()) return;
+  const { error } = await supabaseClient
+    .from("jalan_rusak")
+    .update({ status: statusBaru })
+    .eq("id", id);
+
+  if (error) {
+    alert("Gagal memperbarui status laporan.");
+    console.error(error);
+  } else {
+    alert(`Laporan berhasil diubah menjadi '${statusBaru}'.`);
+    loadPendingReports();
+  }
+}
+
+// === JALANKAN SAAT HALAMAN DIBUKA ===
+loadPendingReports();

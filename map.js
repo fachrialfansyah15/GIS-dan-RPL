@@ -1,826 +1,623 @@
-// Map functionality for Road Monitor Palu
+// Supabase Configuration
+window.SUPABASE_URL = 'https://cxcxatowzymfpasesrvp.supabase.co';
+window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4Y3hhdG93enltZnBhc2VzcnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTY0MDIsImV4cCI6MjA3NTU5MjQwMn0.klPbBM_u-UvlG5DTMmZxRIXuczpqqLfupJUZW0gMRa0';
 
-class RoadMonitorMap {
-    constructor() {
-        this.map = null;
-        this.damageLayer = null;
-        this.maintenanceLayer = null;
-        this.currentTool = 'select';
-        this.selectedReport = null;
-        this.init();
+(function () {
+  // Initialize Supabase client
+  const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+  
+  if (!supabase) {
+    console.error("[map.js] Supabase client not initialized. Check if Supabase CDN is loaded.");
+  }
+
+  // Simple toast banner (non-blocking) for errors/info
+  function showToast(message, type = 'error') {
+    let el = document.getElementById('app-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'app-toast';
+      el.style.cssText = 'position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:9999; background:#fff; color:#333; border:1px solid #e5e7eb; box-shadow:0 6px 18px rgba(0,0,0,0.15); border-radius:10px; padding:10px 14px; font-size:14px;';
+      document.body.appendChild(el);
+    }
+    el.style.background = type === 'error' ? '#fff' : '#ecfdf5';
+    el.style.borderColor = type === 'error' ? '#e5e7eb' : '#10b981';
+    el.style.color = '#333';
+    el.textContent = message;
+    el.style.display = 'block';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  // Guard for Supabase credentials
+  if (!window.SUPABASE_URL || !window.SUPABASE_KEY) {
+    console.warn('[map.js] Missing SUPABASE_URL or SUPABASE_KEY');
+    showToast('Konfigurasi Supabase tidak ditemukan. Cek pengaturan.', 'error');
+  }
+  
+  // Bucket name untuk foto
+  const BUCKET_FOTO_JALAN = "foto_jalan";
+
+  // Inject tooltip CSS once for better border/size fit
+  function ensureTooltipStyles() {
+    if (document.getElementById('leaflet-tooltip-own-style')) return;
+    const style = document.createElement('style');
+    style.id = 'leaflet-tooltip-own-style';
+    style.textContent = `
+      .leaflet-tooltip-own {
+        padding: 8px 10px;
+        border-radius: 8px;
+        line-height: 1.35;
+        white-space: normal;
+        max-width: 260px;
+      }
+      .leaflet-tooltip-own b { font-weight: 700; }
+      .leaflet-tooltip-own img { display:block; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Map bounds - Kota Palu dengan 8 Kecamatan (diperlebar untuk panning)
+  // Kecamatan: Palu Barat, Palu Selatan, Palu Timur, Palu Utara, Tatanga, Ulujadi, Mantikulore, Tawaeli
+  // Koordinat mencakup seluruh wilayah administratif Kota Palu + buffer untuk panning
+  const boundsPalu = L.latLngBounds(
+    [-0.98, 119.78], // Southwest corner (batas selatan-barat) - diperlebar
+    [-0.80, 119.94]  // Northeast corner (batas utara-timur) - diperlebar
+  );
+
+  // Legend filter for severity (clickable)
+  let activeLegendFilter = 'all'; // 'all', 'Rusak Berat', 'Rusak Sedang', 'Rusak Ringan'
+
+  function normalizeSeverity(val) {
+    if (!val) return '';
+    const s = String(val).toLowerCase();
+    if (s.includes('berat')) return 'Rusak Berat';
+    if (s.includes('sedang')) return 'Rusak Sedang';
+    if (s.includes('ringan')) return 'Rusak Ringan';
+    return val;
+  }
+
+  function severityColor(sev) {
+    const n = normalizeSeverity(sev);
+    if (n === 'Rusak Berat') return '#dc3545'; // red
+    if (n === 'Rusak Sedang') return '#ff8c00'; // orange
+    if (n === 'Rusak Ringan') return '#ffd31a'; // yellow
+    return '#3b82f6'; // fallback blue
+  }
+
+  function createSeverityIcon(sev) {
+    const color = severityColor(sev);
+    const html = `
+      <div style="width:26px;height:38px;">
+        <svg width="26" height="38" viewBox="0 0 26 38" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13 0C5.82 0 0 5.82 0 13c0 8.35 9.74 19.33 11.95 21.73.56.6 1.54.6 2.1 0C16.26 32.33 26 21.35 26 13 26 5.82 20.18 0 13 0z" fill="${color}" />
+          <circle cx="13" cy="13" r="5.5" fill="#ffffff"/>
+        </svg>
+      </div>`;
+    return L.divIcon({ className: 'severity-marker', html, iconSize: [26, 38], iconAnchor: [13, 38], popupAnchor: [0, -30], tooltipAnchor: [0, -32] });
+  }
+
+  // Initialize map function
+  function initializeMap() {
+    if (window._roadMonitorMapInitialized) return;
+    
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+      console.error('[map.js] Map element #map not found!');
+      return;
+    }
+    
+    console.log('[map.js] Map element found:', mapElement);
+    console.log('[map.js] Map element dimensions:', mapElement.offsetWidth, 'x', mapElement.offsetHeight);
+    
+    window._map = L.map('map', {
+      center: [-0.900, 119.870], // Kota Palu center
+      zoom: 12,
+      minZoom: 11,
+      maxZoom: 18,
+      zoomControl: false, // We'll add it to bottomright
+      preferCanvas: false
+    });
+
+    console.log('[map.js] Leaflet map object created:', window._map);
+
+    // Add tile layer
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(window._map);
+    
+    tileLayer.on('loading', () => console.log('[map.js] Tiles loading...'));
+    tileLayer.on('load', () => console.log('[map.js] Tiles loaded!'));
+    tileLayer.on('tileerror', (e) => console.error('[map.js] Tile error:', e));
+
+    // Note: All controls (zoom, locate) moved to custom HTML buttons
+    // No Leaflet controls added to map - using HTML buttons in map-controls div instead
+
+    // Note: Legend moved to sidebar - no floating legend on map
+
+    // Free panning enabled (no max bounds)
+    
+    // Layer groups
+    window._damageLayer = L.layerGroup().addTo(window._map);
+    window._maintenanceLayer = L.layerGroup(); // add as needed
+    
+    // Tambahkan marker default di pusat Kota Palu
+    const paluCenterMarker = L.marker([-0.898, 119.870], {
+      icon: L.divIcon({
+        className: 'palu-center-marker',
+        html: '<i class="fas fa-map-marker-alt" style="color: #667eea; font-size: 32px;"></i>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+      })
+    }).addTo(window._map);
+    paluCenterMarker.bindPopup('<strong>Kota Palu</strong><br/>Pusat Kota');
+    
+    window._roadMonitorMapInitialized = true;
+    
+    // Force map to recalculate size after initialization (multiple attempts)
+    setTimeout(() => {
+      if (window._map) {
+        window._map.invalidateSize();
+        console.log('[map.js] Map size invalidated and refreshed (100ms)');
+      }
+    }, 100);
+    
+    setTimeout(() => {
+      if (window._map) {
+        window._map.invalidateSize();
+        console.log('[map.js] Map size invalidated and refreshed (500ms)');
+      }
+    }, 500);
+    
+    // Auto-locate user position (dengan pengecekan bounds)
+    autoLocateUserWithBounds(window._map, boundsPalu);
+  } // End of initializeMap function
+
+  function getMapAndLayers() {
+    return {
+      map: window._map,
+      damageLayer: window._damageLayer
+    };
+  }
+
+  // Helpers: read different cases of column names (safe)
+  function getVal(row, ...keys) {
+    for (const k of keys) {
+      if (Object.prototype.hasOwnProperty.call(row, k) && row[k] !== null && row[k] !== undefined) return row[k];
+    }
+    return null;
+  }
+
+  // Helper: Get photo URL from Supabase storage
+  function getPhotoUrl(fotoJalanUrl) {
+    if (!fotoJalanUrl) {
+      console.log('[map.js] No foto_jalan URL provided');
+      return null;
+    }
+    // Normalisasi dan trim
+    let url = String(fotoJalanUrl).trim();
+    
+    // Kolom foto_jalan sudah berisi URL lengkap dari Supabase Storage
+    // Format: https://cxcxatowzymfpasesrvp.supabase.co/storage/v1/object/public/foto_jalan/JR-PU-001.jpg
+    if (url.startsWith('http')) {
+      console.log('[map.js] Using full URL from database:', url);
+      return url;
+    }
+    
+    // Fallback: jika hanya nama file, generate URL
+    try {
+      const { data: publicURL } = supabase.storage
+        .from('foto_jalan')
+        .getPublicUrl(url);
+      
+      const imageURL = publicURL?.publicUrl || null;
+      console.log('[map.js] Generated public URL:', imageURL);
+      return imageURL;
+    } catch (error) {
+      console.error('[map.js] Error generating photo URL:', error);
+      return null;
+    }
+  }
+
+  // Render popup content sesuai format yang diminta
+  function renderPopupContent(row) {
+    // Ambil data dari kolom yang sesuai dengan struktur tabel
+    const namaJalan = row.nama_jalan || 'Jalan Tidak Diketahui';
+    const jenisKerusakan = row.jenis_kerusakan || 'Tidak dispesifikasi';
+    const fotoPath = row.foto_jalan;
+    
+    console.log(`[map.js] Creating popup for: ${namaJalan}, foto_jalan: ${fotoPath}`);
+    
+    // Get photo URL dari storage
+    const imageURL = getPhotoUrl(fotoPath);
+    
+    // Build foto HTML sesuai format yang diminta
+    let fotoHtml = '';
+    if (imageURL) {
+      // Fixed pixel width so it doesn't scale with map zoom
+      fotoHtml = `<img src="${imageURL}" style="margin-top:8px; border-radius:10px; display:block; width:300px; height:auto; max-width:300px;" onerror="this.style.display='none';">`;
     }
 
-    init() {
-        this.checkAuth();
-        this.initializeMap();
-        this.setupEventListeners();
-        this.initializeSupabase();
-        this.loadMapData();
-        this.setupMobileNav();
+    // Format popup sesuai permintaan
+    return `
+      <div style="font-family:Arial,sans-serif; min-width:240px;">
+        <b>Nama Jalan:</b> ${namaJalan}<br>
+        <b>Jenis Kerusakan:</b> ${jenisKerusakan}<br>
+        ${fotoHtml}
+      </div>
+    `;
+  }
+
+  // Clear markers
+  function clearLayers() {
+    if (window._damageLayer) window._damageLayer.clearLayers();
+  }
+
+  // Apply filters from UI
+  function getActiveFilters() {
+    const tipe = (document.getElementById('damageType')?.value || 'all');
+    const status = (document.getElementById('statusFilter')?.value || 'all');
+    return { tipe, status, legendFilter: activeLegendFilter };
+  }
+
+  // Load markers from Supabase table "jalan_rusak"
+  async function loadMarkersFromSupabase() {
+    if (!supabase) {
+      console.error('[map.js] supabase not initialized');
+      return;
     }
 
-    initializeSupabase() {
-        if (window.supabase && window.supabase.createClient) {
-            const supabase_url = window.SUPABASE_URL;
-            const supabase_key = window.SUPABASE_KEY;
-            this.supabase = (supabase_url && supabase_key) ? window.supabase.createClient(supabase_url, supabase_key) : null;
-        } else {
-            this.supabase = null;
+    console.log('[map.js] Loading markers from jalan_rusak table...');
+    
+    try {
+      // Ambil semua data dari tabel jalan_rusak (status banyak yang NULL)
+      const { data, error } = await supabase
+        .from('jalan_rusak')
+        .select('*');
+
+      if (error) {
+        console.error('[map.js] Supabase select error:', error);
+        showToast('Gagal memuat data dari Supabase: ' + error.message, 'error');
+        return;
+      }
+      
+      if (!Array.isArray(data)) {
+        console.warn('[map.js] Data is not an array');
+        return;
+      }
+
+      console.log(`[map.js] Fetched ${data.length} records from jalan_rusak`);
+
+      clearLayers();
+
+      const { tipe, status, legendFilter } = getActiveFilters();
+
+      let countActive = 0, countProcessing = 0, countCompleted = 0;
+      let validMarkers = 0;
+
+      data.forEach((row, index) => {
+        // Ambil koordinat dari kolom Latitude dan Longitude (HURUF BESAR DI AWAL!)
+        const lat = parseFloat(row.Latitude);
+        const lng = parseFloat(row.Longitude);
+
+        console.log(`[map.js] Row ${index} (${row.nama_jalan}): Latitude=${lat}, Longitude=${lng}`);
+
+        // Validasi koordinat
+        if (isNaN(lat) || isNaN(lng)) {
+          console.warn(`[map.js] Invalid coordinates for ${row.nama_jalan}: lat=${lat}, lng=${lng}`);
+          return;
         }
-    }
-
-    checkAuth() {
-        // Wait for auth to be available
-        if (!window.auth) {
-            setTimeout(() => this.checkAuth(), 100);
-            return;
-        }
-
-        if (!window.auth.isAuthenticated()) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        // Update user info in header
-        const userName = document.getElementById('userName');
-        if (userName) {
-            userName.textContent = window.auth.getCurrentUser();
-        }
-    }
-
-    initializeMap() {
-        // Guard: verify Leaflet and container exist
-        const container = document.getElementById('map');
-        if (!window.L) {
-            console.error('[Leaflet] Library not loaded. Ensure leaflet.css and leaflet.js are included.');
-            if (container) container.innerHTML = '<div style="padding:12px;color:#dc3545">Leaflet tidak termuat. Periksa koneksi/CDN.</div>';
-            return;
-        }
-        if (!container) {
-            console.error('[Leaflet] #map container not found in DOM.');
-            return;
-        }
-        // Inisialisasi Leaflet map terkunci di Sulawesi Tengah
-        // Bounding box Sulawesi Tengah kira2: [latLower, lngLeft], [latUpper, lngRight]
-        const bounds = L.latLngBounds([
-            [-2.5, 119.5],  // SW (lat, lng)
-            [1.2, 122.0]    // NE (lat, lng)
-        ]);
-        this.map = L.map('map', {
-            center: [-0.8966, 120.9],
-            zoom: 8,
-            zoomControl: false,
-            maxBounds: bounds,
-            minZoom: 7,
-            maxZoom: 14
-        });
-        this.map.setMaxBounds(bounds);
-        this.map.on('drag', function(){ this.panInsideBounds(bounds, { animate: false }); });
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(this.map);
-        this.damageLayer = L.layerGroup().addTo(this.map);
-        this.maintenanceLayer = L.layerGroup().addTo(this.map);
-    }
-
-    setupEventListeners() {
-        // Tool buttons (only select and measure)
-        document.querySelectorAll('.tool-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tool = e.currentTarget.dataset.tool;
-                if (tool === 'select' || tool === 'measure') {
-                    this.setActiveTool(tool);
-                }
-            });
-        });
-
-        // Layer checkboxes
-        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                this.toggleLayer(e.target.id, e.target.checked);
-            });
-        });
-
-        // Filter controls
-        document.getElementById('damageType').addEventListener('change', (e) => {
-            this.filterReports('damageType', e.target.value);
-        });
-
-        document.getElementById('priority').addEventListener('change', (e) => {
-            this.filterReports('priority', e.target.value);
-        });
-
-        document.getElementById('status').addEventListener('change', (e) => {
-            this.filterReports('status', e.target.value);
-        });
-
-        // Map controls
-        document.getElementById('zoomIn').addEventListener('click', () => {
-            this.map.zoomIn();
-        });
-
-        document.getElementById('zoomOut').addEventListener('click', () => {
-            this.map.zoomOut();
-        });
-
-        document.getElementById('fullscreen').addEventListener('click', () => {
-            this.toggleFullscreen();
-        });
-
-        document.getElementById('locate').addEventListener('click', () => {
-            this.locateUser();
-        });
-
-        // Tools dropdown (desktop)
-        const toolsToggle = document.getElementById('toolsToggle');
-        const toolsMenu = document.getElementById('toolsMenu');
-        if (toolsToggle && toolsMenu) {
-            toolsToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toolsMenu.classList.toggle('open');
-            });
-            document.addEventListener('click', (e) => {
-                if (toolsMenu.classList.contains('open') && !toolsMenu.contains(e.target) && e.target !== toolsToggle) {
-                    toolsMenu.classList.remove('open');
-                }
-            });
-            toolsMenu.querySelectorAll('button[data-tool]').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const tool = e.currentTarget.getAttribute('data-tool');
-                    this.setActiveTool(tool);
-                    toolsMenu.classList.remove('open');
-                });
-            });
-        }
-
-        // Modal controls
-        const modal = document.getElementById('reportModal');
-        const closeBtn = document.querySelector('.close');
         
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
-        }
+        validMarkers++;
 
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
+        const jenis = getVal(row, 'jenis_kerusakan', 'Jenis Kerusakan') || '';
+        const stat = String(getVal(row, 'status') || '').toLowerCase();
+
+        // Map status from table jalan_rusak to UI buckets
+        // aktif -> Active; pending/in_progress/disetujui -> Processing; selesai/completed/ditolak -> Completed
+        if (!stat || stat === 'aktif') countActive++;
+        else if (['pending','in_progress','disetujui','proses'].includes(stat)) countProcessing++;
+        else if (['selesai','completed','ditolak'].includes(stat)) countCompleted++;
+        else countActive++; // fallback
+
+        // apply filters
+        if (tipe !== 'all' && jenis !== tipe) return;
+        if (status !== 'all' && stat !== status) return;
+        // apply legend filter
+        if (legendFilter !== 'all' && normalizeSeverity(jenis) !== legendFilter) return;
+
+        // Build popup and marker
+        const popup = renderPopupContent(row);
+        // Colored icon based on severity
+        const marker = L.marker([lat, lng], { icon: createSeverityIcon(jenis) });
+
+        // Tooltip pada hover: tampilkan info vertikal + foto di bawah
+        const tooltipImageUrl = getPhotoUrl(row.foto_jalan);
+        const tooltipHtml = `
+          <div style="font-family:Arial,sans-serif; max-width:240px;">
+            <div><b>Nama Jalan:</b> ${row.nama_jalan || '-'}</div>
+            <div style="margin-top:4px;"><b>Jenis Kerusakan:</b> ${row.jenis_kerusakan || '-'}</div>
+            ${tooltipImageUrl ? `<img src="${tooltipImageUrl}" style="margin-top:6px; width:180px; height:auto; border-radius:8px; display:block;" onerror="this.style.display='none';">` : ''}
+          </div>
+        `;
+        marker.bindTooltip(tooltipHtml, { direction: 'top', offset: [0, -10], sticky: true, opacity: 0.95, className: 'leaflet-tooltip-own' });
+
+        // Bind popup dengan ukuran yang sesuai (klik untuk membuka)
+        marker.bindPopup(popup, { maxWidth: 300, minWidth: 220 });
+
+        // Tooltip akan sticky saat hover; tidak perlu open/close manual
+
+        marker.on('popupopen', () => {
+          console.log('[map.js] Popup opened for:', row.nama_jalan);
         });
 
-        // Logout functionality
-        const logoutLink = document.getElementById('logoutLink');
-        if (logoutLink) {
-            logoutLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.auth.logout();
-            });
-        }
+        window._damageLayer.addLayer(marker);
+      });
+
+      // update stats UI (both desktop and mobile views)
+      const statActiveEl = document.getElementById('statActive');
+      const statProcessingEl = document.getElementById('statProcessing');
+      const statCompletedEl = document.getElementById('statCompleted');
+      const statActiveMobileEl = document.getElementById('statActiveMobile');
+      const statProcessingMobileEl = document.getElementById('statProcessingMobile');
+      const statCompletedMobileEl = document.getElementById('statCompletedMobile');
+      
+      if (statActiveEl) statActiveEl.textContent = countActive;
+      if (statProcessingEl) statProcessingEl.textContent = countProcessing;
+      if (statCompletedEl) statCompletedEl.textContent = countCompleted;
+      if (statActiveMobileEl) statActiveMobileEl.textContent = countActive;
+      if (statProcessingMobileEl) statProcessingMobileEl.textContent = countProcessing;
+      if (statCompletedMobileEl) statCompletedMobileEl.textContent = countCompleted;
+
+      console.log(`[map.js] Successfully loaded ${validMarkers} valid markers out of ${data.length} records`);
+      console.log('[map.js] Total markers on map:', window._damageLayer.getLayers().length);
+      
+      if (validMarkers === 0) {
+        console.warn('[map.js] No valid markers found! Check if Latitude/Longitude columns have data.');
+      }
+    } catch (err) {
+      console.error('[map.js] load error', err);
     }
+  }
 
-    setupMobileNav() {
-        // Sidebar toggle for mobile
-        const sidebar = document.getElementById('sidebarNav');
-        const toggle = document.getElementById('sidebarToggle');
-        if (sidebar && toggle) {
-            toggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                sidebar.classList.toggle('open');
-            });
-            // Close sidebar when clicking outside or on a nav link
-            document.addEventListener('click', (e) => {
-                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle) {
-                    sidebar.classList.remove('open');
-                }
-            });
-            // Close sidebar on nav link click
-            sidebar.querySelectorAll('.nav-item').forEach(link => {
-                link.addEventListener('click', () => {
-                    sidebar.classList.remove('open');
-                });
-            });
-        }
+  // Open modal and fill details
+  function openReportModal(row) {
+    const kode = getVal(row, 'kode_titik_jalan', 'kode_titik', 'kode_titik_jalan') || '-';
+    const nama = getVal(row, 'nama_jalan') || '-';
+    const jenis = getVal(row, 'jenis_kerusakan') || '-';
+    const tanggal = getVal(row, 'tanggal_survey') || '-';
+    const status = getVal(row, 'status') || '-';
+    const foto = buildPublicUrl(getVal(row, 'foto_jalan')) || '';
 
-        // Quick Actions floating menu for mobile
-        const quickToggle = document.getElementById('quickActionsToggle');
-        const quickMenu = document.getElementById('quickActionsMenu');
-        const backdrop = document.getElementById('quickActionsBackdrop');
-        if (quickToggle && quickMenu && backdrop) {
-            const openMenu = () => {
-                quickMenu.classList.add('open');
-                backdrop.classList.add('show');
-                quickToggle.setAttribute('aria-expanded', 'true');
-            };
-            const closeMenu = () => {
-                quickMenu.classList.remove('open');
-                backdrop.classList.remove('show');
-                quickToggle.setAttribute('aria-expanded', 'false');
-            };
-            const toggleMenu = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (quickMenu.classList.contains('open')) {
-                    closeMenu();
-                } else {
-                    openMenu();
-                }
-            };
-            quickToggle.addEventListener('pointerdown', toggleMenu);
-            quickToggle.addEventListener('click', toggleMenu);
-            quickMenu.addEventListener('click', (e) => e.stopPropagation());
-            backdrop.addEventListener('click', closeMenu);
-            document.addEventListener('click', (e) => {
-                if (quickMenu.classList.contains('open') && !quickMenu.contains(e.target) && !quickToggle.contains(e.target)) {
-                    closeMenu();
-                }
-            });
-            quickMenu.querySelectorAll('.quick-action-item').forEach(link => {
-                link.addEventListener('click', closeMenu);
-            });
-        }
+    document.getElementById('reportId').textContent = kode;
+    document.getElementById('reportLocation').textContent = nama;
+    document.getElementById('damageType').textContent = jenis;
+    document.getElementById('reportPriority').textContent = (row.priority || '-');
+    document.getElementById('reportStatus').textContent = status;
+    document.getElementById('reportedBy').textContent = (row.reporter || '-');
+    document.getElementById('reportDate').textContent = tanggal;
+    document.getElementById('reportDescription').textContent = (row.description || '-');
+
+    // show modal
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.style.display = 'block';
+  }
+
+  // close modal handlers
+  (function setupModal() {
+    const modal = document.getElementById('reportModal');
+    const closeBtn = document.querySelector('.modal .close');
+    if (closeBtn) closeBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+  })();
+
+  // Wire UI events (filters, layer toggles, map controls)
+  function setupUIHandlers() {
+    // Filter changes
+    const dmgSelect = document.getElementById('damageType');
+    const statusSelect = document.getElementById('statusFilter');
+    if (dmgSelect) dmgSelect.addEventListener('change', loadMarkersFromSupabase);
+    if (statusSelect) statusSelect.addEventListener('change', loadMarkersFromSupabase);
+
+    // Layer toggles (damage / maintenance)
+    const damageCheckbox = document.getElementById('damage');
+    if (damageCheckbox) damageCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) window._map.addLayer(window._damageLayer); 
+      else window._map.removeLayer(window._damageLayer);
+    });
+
+    // Custom zoom buttons
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+    const locateBtn = document.getElementById('locate');
+    
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', () => {
+        if (window._map) window._map.zoomIn();
+      });
     }
-
-    setActiveTool(tool) {
-        // Remove active class from all tools
-        document.querySelectorAll('.tool-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        // Add active class to selected tool
-        document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
-        this.currentTool = tool;
-
-        // Change cursor based on tool
-        const mapContainer = document.getElementById('map');
-        mapContainer.style.cursor = this.getCursorForTool(tool);
-
-        // Setup tool-specific event handlers
-        this.setupToolHandlers();
+    
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', () => {
+        if (window._map) window._map.zoomOut();
+      });
     }
-
-    getCursorForTool(tool) {
-        const cursors = {
-            'select': 'pointer',
-            'measure': 'crosshair',
-            'draw': 'crosshair',
-            'report': 'crosshair'
-        };
-        return cursors[tool] || 'default';
+    
+    if (locateBtn) {
+      locateBtn.addEventListener('click', () => {
+        autoLocateUserWithBounds(window._map, boundsPalu);
+      });
     }
-
-    setupToolHandlers() {
-        // Remove existing click handlers
-        this.map.off('click');
-
-        // Add new click handler based on current tool
-        this.map.on('click', (e) => {
-            switch (this.currentTool) {
-                case 'select':
-                    this.handleMapClick(e);
-                    break;
-                case 'measure':
-                    this.handleMeasureClick(e);
-                    break;
-                case 'draw':
-                    this.handleDrawClick(e);
-                    break;
-                case 'report':
-                    this.handleReportClick(e);
-                    break;
-            }
-        });
-    }
-
-    handleMapClick(e) {
-        // Find nearest report and show details
-        const nearestReport = this.findNearestReport(e.latlng);
-        if (nearestReport) {
-            this.showReportDetails(nearestReport);
-        }
-    }
-
-    handleMeasureClick(e) {
-        // Add measurement functionality
-        this.addMeasurementPoint(e.latlng);
-    }
-
-    handleDrawClick(e) {
-        // Add drawing functionality
-        this.addDrawingPoint(e.latlng);
-    }
-
-    handleReportClick(e) {
-        // Redirect to report form with coordinates
-        const coords = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
-        window.location.href = `report.html?coords=${coords}`;
-    }
-
-    loadMapData() {
-        this.loadDamageReports();
-        // Hapus semua pemanggilan data dummy/statik untuk marker!
-        // this.loadMaintenanceData(); (optional, soon-to-be removed)
-        if (this._refreshInterval) clearInterval(this._refreshInterval);
-        this._refreshInterval = setInterval(()=>this.loadDamageReports(), 30000);
-    }
-
-    loadRoadData() {
-        // Generate road data for Palu City
-        const roads = this.generatePaluRoadData();
+    
+    // Mobile: Toggle map tools sidebar via tools dropdown
+    const toolsToggle = document.getElementById('toolsToggle');
+    const mapSidebar = document.querySelector('.map-box-container .sidebar');
+    
+    if (toolsToggle && mapSidebar) {
+      toolsToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        mapSidebar.classList.toggle('mobile-open');
         
-        roads.forEach(road => {
-            const roadLine = L.polyline(road.coordinates, {
-                color: this.getRoadColor(road.type),
-                weight: this.getRoadWeight(road.type),
-                opacity: 0.8
-            });
-
-            roadLine.roadData = road;
-            roadLine.on('click', (e) => {
-                this.showRoadInfo(road);
-            });
-
-            this.roadLayer.addLayer(roadLine);
-        });
-    }
-
-    async loadDamageReports() {
-        this.damageLayer.clearLayers();
-        // Selalu gunakan Supabase
-        if (this.supabase) {
-            try {
-                const { data, error } = await this.supabase
-                    .from('jalan_rusak')
-                    .select('*');
-                if (!error && Array.isArray(data)) {
-                    data.forEach(row => {
-                        // Wajib pakai Latitude & Longitude
-                        const lat = parseFloat(row.Latitude);
-                        const lng = parseFloat(row.Longitude);
-                        if (isNaN(lat) || isNaN(lng)) return;
-                        const marker = L.marker([lat, lng], { icon: this.getReportIcon('Severe Damage', 'medium') });
-                        let content = `<div style='min-width:220px'>`;
-                        content += `<strong>${row.nama_jalan || '-'}</strong><br/>`;
-                        content += `Jenis kerusakan: ${row.jenis_kerusakan || '-'}<br/>`;
-                        if (row.foto_jalan) content += `<img src='${row.foto_jalan}' alt='foto jalan' style='width:200px;margin-top:6px;border-radius:6px'/><br/>`;
-                        content += `</div>`;
-                        marker.bindPopup(content);
-                        this.damageLayer.addLayer(marker);
-                    });
-                    return;
-                }
-                if (error) {
-                    console.error('[Supabase] loadDamageReports error:', error);
-                    this.showInlineNotice('Gagal memuat data dari Supabase (jalan_rusak). Pastikan tabel dan kebijakan RLS tersedia.');
-                }
-            } catch (err) {
-                console.error('[Supabase] exception:', err);
-                this.showInlineNotice('Kesalahan koneksi ke Supabase.');
-            }
+        // Toggle chevron icon
+        const chevron = toolsToggle.querySelector('.fa-chevron-down, .fa-chevron-up');
+        if (chevron) {
+          chevron.classList.toggle('fa-chevron-down');
+          chevron.classList.toggle('fa-chevron-up');
         }
-    }
-
-    showInlineNotice(message) {
-        const host = document.querySelector('.map-container') || document.body;
-        if (!host || host.querySelector('.inline-notice')) return;
-        const div = document.createElement('div');
-        div.className = 'inline-notice';
-        div.style.cssText = 'position:absolute;top:70px;left:16px;right:16px;background:#fff3cd;color:#856404;border:1px solid #ffeeba;border-radius:8px;padding:10px 12px;z-index:7000;box-shadow:0 2px 6px rgba(0,0,0,0.08)';
-        div.textContent = message;
-        host.appendChild(div);
-        setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 6000);
-    }
-
-    mapSeverity(value) {
-        // Normalisasi label ke format lama ikon
-        const v = (value || '').toLowerCase();
-        if (v.includes('berat') || v.includes('severe')) return 'Severe Damage';
-        if (v.includes('sedang') || v.includes('medium')) return 'Medium Damage';
-        return 'Minor Damage';
-    }
-
-    loadMaintenanceData() {
-        // Load maintenance data
-        const maintenance = this.getMaintenanceData();
-        
-        maintenance.forEach(item => {
-            const marker = this.createMaintenanceMarker(item);
-            this.maintenanceLayer.addLayer(marker);
-        });
-    }
-
-    loadTrafficData() {
-        // Load traffic data
-        const traffic = this.getTrafficData();
-        
-        traffic.forEach(item => {
-            const marker = this.createTrafficMarker(item);
-            this.trafficLayer.addLayer(marker);
-        });
-    }
-
-    generatePaluRoadData() {
-        // Generate sample road data for Palu City
-        const baseLat = -0.8966;
-        const baseLng = 119.8756;
-
-        return [
-            {
-                id: 'road-1',
-                name: 'Jl. Sudirman',
-                type: 'arterial',
-                coordinates: [
-                    [baseLat - 0.01, baseLng - 0.02],
-                    [baseLat, baseLng],
-                    [baseLat + 0.01, baseLng + 0.02]
-                ]
-            },
-            {
-                id: 'road-2',
-                name: 'Jl. Ahmad Yani',
-                type: 'arterial',
-                coordinates: [
-                    [baseLat - 0.02, baseLng - 0.01],
-                    [baseLat + 0.02, baseLng + 0.01]
-                ]
-            },
-            {
-                id: 'road-3',
-                name: 'Jl. Gatot Subroto',
-                type: 'local',
-                coordinates: [
-                    [baseLat - 0.005, baseLng - 0.015],
-                    [baseLat + 0.005, baseLng + 0.015]
-                ]
-            },
-            {
-                id: 'road-4',
-                name: 'Jl. Palu IV',
-                type: 'local',
-                coordinates: [
-                    [baseLat - 0.015, baseLng - 0.005],
-                    [baseLat + 0.015, baseLng + 0.005]
-                ]
+      });
+      
+      // Close sidebar when clicking outside (mobile only)
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 900) {
+          if (!mapSidebar.contains(e.target) && !toolsToggle.contains(e.target)) {
+            mapSidebar.classList.remove('mobile-open');
+            const chevron = toolsToggle.querySelector('.fa-chevron-up');
+            if (chevron) {
+              chevron.classList.remove('fa-chevron-up');
+              chevron.classList.add('fa-chevron-down');
             }
-        ];
-    }
-
-    getDamageReports() {
-        // Prefer user-submitted reports stored by report.js
-        const storedReports = localStorage.getItem('roadDamageReports');
-        if (storedReports) {
-            const allReports = JSON.parse(storedReports);
-            // Show reported/in_progress/completed (include reported to visualize new points)
-            return allReports.filter(report => 
-                report.status === 'reported' ||
-                report.status === 'in_progress' || 
-                report.status === 'completed'
-            ).map(r => ({
-                id: r.id,
-                type: r.damageType, // now holds Minor/Medium/Severe
-                priority: r.priority || 'medium',
-                status: r.status,
-                location: r.location,
-                coordinates: [r.coordinates.lat, r.coordinates.lng],
-                description: r.description || '',
-                reporter: r.reporter || '',
-                date: r.date
-            }));
+          }
         }
-
-        // Fallback sample data mapped to new severity labels
-        return [
-            {
-                id: 'RPT-001',
-                type: 'Severe Damage',
-                priority: 'high',
-                status: 'reported',
-                location: 'Jl. Sudirman',
-                coordinates: [-0.8966, 119.8756],
-                description: 'Large pothole causing traffic disruption',
-                reporter: 'John Doe',
-                date: new Date().toISOString()
-            },
-            {
-                id: 'RPT-002',
-                type: 'Medium Damage',
-                priority: 'medium',
-                status: 'in_progress',
-                location: 'Jl. Ahmad Yani',
-                coordinates: [-0.9000, 119.8800],
-                description: 'Multiple cracks on road surface',
-                reporter: 'Jane Smith',
-                date: new Date(Date.now() - 86400000).toISOString()
-            },
-            {
-                id: 'RPT-003',
-                type: 'Severe Damage',
-                priority: 'high',
-                status: 'reported',
-                location: 'Jl. Gatot Subroto',
-                coordinates: [-0.8900, 119.8700],
-                description: 'Road flooding during heavy rain',
-                reporter: 'Mike Johnson',
-                date: new Date(Date.now() - 172800000).toISOString()
-            }
-        ];
+      });
     }
+  }
 
-    getMaintenanceData() {
-        return [
-            {
-                id: 'MNT-001',
-                type: 'repair',
-                status: 'in_progress',
-                location: 'Jl. Ahmad Yani',
-                coordinates: [-0.9000, 119.8800],
-                description: 'Road repair in progress',
-                startDate: new Date().toISOString(),
-                estimatedCompletion: new Date(Date.now() + 86400000).toISOString()
-            }
-        ];
-    }
-
-    getTrafficData() {
-        return [
-            {
-                id: 'TFC-001',
-                type: 'congestion',
-                level: 'moderate',
-                location: 'Jl. Sudirman',
-                coordinates: [-0.8966, 119.8756],
-                speed: 25,
-                timestamp: new Date().toISOString()
-            }
-        ];
-    }
-
-    createReportMarker(report) {
-        const icon = this.getReportIcon(report.type, report.priority);
-        const marker = L.marker(report.coordinates, { icon });
-        
-        marker.reportData = report;
-        marker.on('click', () => {
-            this.showReportDetails(report);
-        });
-
-        return marker;
-    }
-
-    createMaintenanceMarker(maintenance) {
-        const icon = L.divIcon({
-            className: 'maintenance-marker',
-            html: '<i class="fas fa-tools" style="color: #17a2b8; font-size: 20px;"></i>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-        });
-
-        const marker = L.marker(maintenance.coordinates, { icon });
-        
-        marker.bindPopup(`
-            <div class="maintenance-popup">
-                <h4>Maintenance Work</h4>
-                <p><strong>Type:</strong> ${maintenance.type}</p>
-                <p><strong>Status:</strong> ${maintenance.status}</p>
-                <p><strong>Location:</strong> ${maintenance.location}</p>
-                <p><strong>Description:</strong> ${maintenance.description}</p>
-            </div>
-        `);
-
-        return marker;
-    }
-
-    createTrafficMarker(traffic) {
-        const color = this.getTrafficColor(traffic.level);
-        const marker = L.circleMarker(traffic.coordinates, {
-            radius: 8,
-            fillColor: color,
-            color: '#fff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
-        });
-
-        marker.bindPopup(`
-            <div class="traffic-popup">
-                <h4>Traffic Information</h4>
-                <p><strong>Level:</strong> ${traffic.level}</p>
-                <p><strong>Speed:</strong> ${traffic.speed} km/h</p>
-                <p><strong>Location:</strong> ${traffic.location}</p>
-            </div>
-        `);
-
-        return marker;
-    }
-
-    getReportIcon(type, priority) {
-        const colors = {
-            'Severe Damage': '#dc3545',
-            'Medium Damage': '#ffc107',
-            'Minor Damage': '#28a745'
-        };
-        const defaultColor = '#667eea';
-        const iconClass = 'fas fa-exclamation-triangle';
-        const color = colors[type] || defaultColor;
-        return L.divIcon({
-            className: 'report-marker',
-            html: `<i class="${iconClass}" style="color: ${color}; font-size: 20px;"></i>`,
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-        });
-    }
-
-    getRoadColor(type) {
-        const colors = {
-            'highway': '#2E8B57',
-            'arterial': '#4169E1',
-            'local': '#808080'
-        };
-        return colors[type] || '#808080';
-    }
-
-    getRoadWeight(type) {
-        const weights = {
-            'highway': 6,
-            'arterial': 4,
-            'local': 2
-        };
-        return weights[type] || 2;
-    }
-
-    getTrafficColor(level) {
-        const colors = {
-            'normal': '#2E8B57',
-            'moderate': '#FFD700',
-            'heavy': '#FF6347'
-        };
-        return colors[level] || '#2E8B57';
-    }
-
-    toggleLayer(layerId, visible) {
-        switch (layerId) {
-            case 'damage':
-                if (visible) {
-                    this.map.addLayer(this.damageLayer);
-                } else {
-                    this.map.removeLayer(this.damageLayer);
-                }
-                break;
-            case 'maintenance':
-                if (visible) {
-                    this.map.addLayer(this.maintenanceLayer);
-                } else {
-                    this.map.removeLayer(this.maintenanceLayer);
-                }
-                break;
+  // Auto-locate user position dengan pengecekan bounds
+  function autoLocateUserWithBounds(map, bounds) {
+    if (navigator.geolocation) {
+      console.log('[map.js] Attempting to locate user position...');
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+          const userLatLng = L.latLng(userLat, userLng);
+          
+          console.log(`[map.js] User location found: ${userLat}, ${userLng}`);
+          
+          // Cek apakah lokasi user dalam bounds Palu
+          if (bounds.contains(userLatLng)) {
+            // Lokasi dalam area Palu, zoom ke lokasi user
+            map.setView([userLat, userLng], 14);
+          } else {
+            console.log('[map.js] User location outside Palu bounds, staying at default view');
+            // Lokasi di luar Palu, tetap di view default
+          }
+        },
+        (error) => {
+          console.warn('[map.js] Geolocation failed:', error.message);
+          // Tetap di view default Palu
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 60000
         }
+      );
     }
+  }
 
-    filterReports(filterType, value) {
-        this.damageLayer.eachLayer(layer => {
-            if (!layer.reportData) return;
-            const report = layer.reportData;
-            let show = true;
-
-            switch (filterType) {
-                case 'damageType':
-                    show = value === 'all' || report.type === value;
-                    break;
-                case 'priority':
-                    show = value === 'all' || (report.priority || 'medium') === value;
-                    break;
-                case 'status':
-                    show = value === 'all' || report.status === value;
-                    break;
-            }
-
-            if (show) {
-                layer.setOpacity(1);
-            } else {
-                layer.setOpacity(0.3);
-            }
-        });
+  // Location selection mode untuk form laporan
+  function enableLocationSelectionMode() {
+    console.log('[map.js] Location selection mode enabled');
+    
+    // Tampilkan notifikasi
+    const notification = document.createElement('div');
+    notification.id = 'locationSelectNotif';
+    notification.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #667eea; color: white; padding: 12px 24px; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: 500;';
+    notification.innerHTML = '<i class="fas fa-map-marker-alt"></i> Klik pada peta untuk memilih lokasi';
+    document.body.appendChild(notification);
+    
+    // Tambahkan marker sementara untuk selection
+    let selectionMarker = null;
+    
+    // Handler untuk klik peta
+    const clickHandler = (e) => {
+      const { lat, lng } = e.latlng;
+      
+      console.log(`[map.js] Location selected: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      
+      // Hapus marker lama
+      if (selectionMarker) {
+        window._map.removeLayer(selectionMarker);
+      }
+      
+      // Tambah marker baru
+      selectionMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: 'selection-marker',
+          html: '<i class="fas fa-map-pin" style="color: #e74c3c; font-size: 36px;"></i>',
+          iconSize: [36, 36],
+          iconAnchor: [18, 36]
+        })
+      }).addTo(window._map);
+      
+      // Update notifikasi
+      notification.innerHTML = `<i class="fas fa-check-circle"></i> Lokasi dipilih! Mengalihkan ke form...`;
+      notification.style.background = '#28a745';
+      
+      // Auto redirect ke report.html dengan koordinat di URL params
+      setTimeout(() => {
+        window.location.href = `report.html?lat=${lat.toFixed(6)}&lng=${lng.toFixed(6)}`;
+      }, 800); // Delay 0.8s untuk user melihat konfirmasi
+    };
+    
+    window._map.on('click', clickHandler);
+    
+    // Simpan handler untuk cleanup
+    window._locationSelectHandler = clickHandler;
+  }
+  
+  // Cek apakah mode selection aktif (dari query parameter)
+  function checkLocationSelectionMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('selectLocation') === 'true') {
+      enableLocationSelectionMode();
     }
+  }
 
-    findNearestReport(latlng) {
-        let nearestReport = null;
-        let minDistance = Infinity;
-
-        this.damageLayer.eachLayer(layer => {
-            if (layer.reportData) {
-                const distance = this.calculateDistance(latlng, layer.getLatLng());
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestReport = layer.reportData;
-                }
-            }
-        });
-
-        return nearestReport;
-    }
-
-    calculateDistance(latlng1, latlng2) {
-        const R = 6371e3; // Earth's radius in meters
-        const φ1 = latlng1.lat * Math.PI / 180;
-        const φ2 = latlng2.lat * Math.PI / 180;
-        const Δφ = (latlng2.lat - latlng1.lat) * Math.PI / 180;
-        const Δλ = (latlng2.lng - latlng1.lng) * Math.PI / 180;
-
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-        return R * c;
-    }
-
-    showReportDetails(report) {
-        document.getElementById('reportId').textContent = report.id;
-        document.getElementById('reportLocation').textContent = report.location;
-        document.getElementById('damageType').textContent = report.type;
-        document.getElementById('reportPriority').textContent = (report.priority || '').toString().charAt(0).toUpperCase() + (report.priority || '').toString().slice(1);
-        document.getElementById('reportStatus').textContent = report.status.charAt(0).toUpperCase() + report.status.slice(1);
-        document.getElementById('reportedBy').textContent = report.reporter;
-        document.getElementById('reportDate').textContent = new Date(report.date).toLocaleString();
-        document.getElementById('reportDescription').textContent = report.description;
-
-        document.getElementById('reportModal').style.display = 'block';
-    }
-
-    showRoadInfo(road) {
-        alert(`Road Information:\n\nName: ${road.name}\nType: ${road.type}\nID: ${road.id}`);
-    }
-
-    addMeasurementPoint(latlng) {
-        const marker = L.marker(latlng, {
-            icon: L.divIcon({
-                className: 'measurement-marker',
-                html: '<i class="fas fa-ruler" style="color: #FF6347; font-size: 16px;"></i>',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
-            })
-        }).addTo(this.map);
-
-        marker.bindPopup(`Measurement Point<br>Lat: ${latlng.lat.toFixed(6)}<br>Lng: ${latlng.lng.toFixed(6)}`);
-    }
-
-    addDrawingPoint(latlng) {
-        const marker = L.marker(latlng, {
-            icon: L.divIcon({
-                className: 'drawing-marker',
-                html: '<i class="fas fa-pencil-alt" style="color: #32CD32; font-size: 16px;"></i>',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
-            })
-        }).addTo(this.map);
-
-        marker.bindPopup(`Drawing Point<br>Lat: ${latlng.lat.toFixed(6)}<br>Lng: ${latlng.lng.toFixed(6)}`);
-    }
-
-    toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().then(() => {
-                // Resize map after entering fullscreen
-                setTimeout(() => {
-                    this.map.invalidateSize();
-                }, 100);
-            });
-        } else {
-            document.exitFullscreen().then(() => {
-                // Resize map after exiting fullscreen
-                setTimeout(() => {
-                    this.map.invalidateSize();
-                }, 100);
-            });
+  // Mobile sidebar toggle
+  function setupMobileSidebar() {
+    const sidebar = document.getElementById('mapSidebar');
+    const toggle = document.getElementById('sidebarToggle');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    
+    if (!sidebar || !toggle || !backdrop) return;
+    
+    // Toggle sidebar
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+      backdrop.classList.toggle('active');
+    });
+    
+    // Close sidebar when clicking backdrop
+    backdrop.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      backdrop.classList.remove('active');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 900) {
+        if (!sidebar.contains(e.target) && !toggle.contains(e.target) && sidebar.classList.contains('active')) {
+          sidebar.classList.remove('active');
+          backdrop.classList.remove('active');
         }
-    }
+      }
+    });
+  }
 
-    locateUser() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const userLatLng = [position.coords.latitude, position.coords.longitude];
-                this.map.setView(userLatLng, 15);
-                
-                // Add user location marker
-                L.marker(userLatLng, {
-                    icon: L.divIcon({
-                        className: 'user-location-marker',
-                        html: '<i class="fas fa-crosshairs" style="color: #667eea; font-size: 20px;"></i>',
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    })
-                }).addTo(this.map).bindPopup('Your Location').openPopup();
-            });
-        } else {
-            alert('Geolocation is not supported by this browser.');
-        }
-    }
-}
+  // Initial load
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('[map.js] DOM loaded, initializing map...');
+    ensureTooltipStyles();
+    initializeMap(); // Initialize map FIRST
+    setupUIHandlers();
+    setupMobileSidebar(); // Setup mobile sidebar toggle
+    loadMarkersFromSupabase();
+    checkLocationSelectionMode(); // Cek mode selection
+    // expose refresh fn
+    window.refreshJalanRusakMarkers = loadMarkersFromSupabase;
+  });
 
-// Initialize map when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new RoadMonitorMap();
-});
-
+})();
