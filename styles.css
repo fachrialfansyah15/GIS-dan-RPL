@@ -12,6 +12,15 @@ body {
     overflow-x: hidden;
 }
 
+/* Base & Reset (mobile rendering stability) */
+html, body {
+    height: 100%;
+    background: #f3f4f6; /* solid base to avoid gradient bleed */
+    overscroll-behavior: none; /* reduce Android blue glow/tearing */
+    -webkit-tap-highlight-color: transparent;
+}
+body { overflow-x: hidden; }
+
 /* Login Page Styles */
 .login-page {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -283,6 +292,13 @@ body {
     padding-top: 110px; /* header (60) + nav (50) */
 }
 
+/* On mobile, the desktop navigation is hidden, so only account for the fixed header (60px) */
+@media (max-width: 900px) {
+  .app-container {
+    padding-top: 60px !important; /* remove extra 50px gap above title */
+  }
+}
+
 /* Navigation */
 /* Navigation fixed under header */
 .navigation {
@@ -378,6 +394,10 @@ body {
     justify-content: space-between;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
+    /* Prevent gradient tearing on mobile during scroll */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
 }
 
 .header-left {
@@ -1041,7 +1061,7 @@ body {
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 20px;
+    gap: 100px;
     margin-bottom: 20px;
 }
 

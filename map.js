@@ -10,6 +10,51 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     console.error("[map.js] Supabase client not initialized. Check if Supabase CDN is loaded.");
   }
 
+  // Mobile hamburger -> quick actions overlay
+  function setupHamburgerMenu() {
+    const toggle = document.getElementById('quickActionsToggle');
+    const menu = document.getElementById('quickActionsMenu');
+    const backdrop = document.getElementById('quickActionsBackdrop');
+
+    if (!toggle || !menu || !backdrop) return;
+
+    const closeMenu = () => {
+      menu.classList.remove('open');
+      backdrop.classList.remove('show');
+      // Recalculate map size after layout changes
+      if (window._map) setTimeout(() => window._map.invalidateSize(), 150);
+    };
+
+    const openMenu = () => {
+      menu.classList.add('open');
+      backdrop.classList.add('show');
+      if (window._map) setTimeout(() => window._map.invalidateSize(), 150);
+    };
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (menu.classList.contains('open')) closeMenu();
+      else openMenu();
+    });
+
+    backdrop.addEventListener('click', closeMenu);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMenu();
+    });
+  }
+
+  // Ensure map resizes correctly on viewport changes (mobile orientation, etc.)
+  function setupResizeInvalidate() {
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (window._map) window._map.invalidateSize();
+      }, 150);
+    });
+  }
+
   // Simple toast banner (non-blocking) for errors/info
   function showToast(message, type = 'error') {
     let el = document.getElementById('app-toast');
@@ -614,6 +659,8 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     initializeMap(); // Initialize map FIRST
     setupUIHandlers();
     setupMobileSidebar(); // Setup mobile sidebar toggle
+    setupHamburgerMenu(); // Mobile hamburger -> quick actions
+    setupResizeInvalidate(); // Keep map sized on viewport changes
     loadMarkersFromSupabase();
     checkLocationSelectionMode(); // Cek mode selection
     // expose refresh fn

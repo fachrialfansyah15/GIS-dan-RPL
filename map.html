@@ -72,6 +72,16 @@
         </div>
         <div class="quick-actions-backdrop" id="quickActionsBackdrop"></div>
 
+        <!-- Quick Actions Floating Menu (mobile only) -->
+        <div class="quick-actions-menu" id="quickActionsMenu">
+            <a href="dashboard.html" class="quick-action-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+            <a href="report.html" class="quick-action-item"><i class="fas fa-plus-circle"></i><span>Lapor</span></a>
+            <a href="map.html" class="quick-action-item"><i class="fas fa-map-marked-alt"></i><span>Peta</span></a>
+            <a href="reports.html" class="quick-action-item"><i class="fas fa-list-alt"></i><span>Laporan</span></a>
+            <a href="about.html" class="quick-action-item"><i class="fas fa-info-circle"></i><span>Tentang</span></a>
+            <a href="#" class="quick-action-item"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
+        </div>
+
         <!-- Sidebar Navigation -->
         <nav class="sidebar" id="sidebarNav">
             <a href="dashboard.html" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
@@ -292,11 +302,6 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="auth.js"></script>
-    <script>
-        window.SUPABASE_URL = 'https://cxcxatowzymfpasesrvp.supabase.co';
-        window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4Y3hhdG93enltZnBhc2VzcnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTY0MDIsImV4cCI6MjA3NTU5MjQwMn0.klPbBM_u-UvlG5DTMmZxRIXuczpqqLfupJUZW0gMRa0';
-    </script>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="map.js"></script>
 </body></html>
