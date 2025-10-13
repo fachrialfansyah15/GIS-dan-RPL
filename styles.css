@@ -871,11 +871,44 @@ body { overflow-x: hidden; }
     flex: 1;
     /* Ensure visible map area even when address bar is shown */
     min-height: calc(100dvh - 120px); /* header (60) + quick actions bar (~60) */
+    padding-bottom: 68px; /* space for bottom bar */
   }
   
   .map-box-container .map-container #map {
     height: calc(100dvh - 120px) !important;
   }
+}
+
+/* Map bottom control bar (mobile) */
+@media (max-width: 900px) {
+  .map-bottom-bar {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: rgba(255,255,255,0.96);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    z-index: 4200;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .map-bottom-bar .chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #f4f6ff;
+    color: #3949ab;
+    border: 1px solid #e4e8ff;
+    border-radius: 999px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .map-bottom-bar .chip-btn i { font-size: 16px; }
 }
 
 /* Compact sidebar sections for mobile */

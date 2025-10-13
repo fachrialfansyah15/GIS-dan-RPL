@@ -531,6 +531,43 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         }
       });
     }
+
+    // --- Mobile bottom bar chips ---
+    const sidebarEl = document.querySelector('.map-box-container .sidebar');
+    function openSidebarAndFocus(sectionTitle) {
+      if (!sidebarEl) return;
+      if (!sidebarEl.classList.contains('mobile-open')) sidebarEl.classList.add('mobile-open');
+      // try to focus by heading text
+      const headers = Array.from(sidebarEl.querySelectorAll('h3'));
+      const target = headers.find(h => h.textContent.trim().toLowerCase() === sectionTitle.toLowerCase());
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // rotate chevron on toolsToggle to "open" state
+      const chevron = toolsToggle?.querySelector('.fa-chevron-down, .fa-chevron-up');
+      if (chevron && chevron.classList.contains('fa-chevron-down')) {
+        chevron.classList.remove('fa-chevron-down');
+        chevron.classList.add('fa-chevron-up');
+      }
+      // keep map sized
+      if (window._map) setTimeout(() => window._map.invalidateSize(), 150);
+    }
+
+    const chipStats = document.getElementById('chipStats');
+    const chipTools = document.getElementById('chipTools');
+    const chipLegend = document.getElementById('chipLegend');
+    const chipLocate = document.getElementById('chipLocate');
+    const chipZoomIn = document.getElementById('chipZoomIn');
+
+    if (chipStats) chipStats.addEventListener('click', () => openSidebarAndFocus('Statistik'));
+    if (chipTools) chipTools.addEventListener('click', () => openSidebarAndFocus('Alat Peta'));
+    if (chipLegend) chipLegend.addEventListener('click', () => openSidebarAndFocus('Legenda'));
+    if (chipLocate) chipLocate.addEventListener('click', () => {
+      const btn = document.getElementById('locate');
+      if (btn) btn.click();
+    });
+    if (chipZoomIn) chipZoomIn.addEventListener('click', () => {
+      const btn = document.getElementById('zoomIn');
+      if (btn) btn.click();
+    });
   }
 
   // Auto-locate user position dengan pengecekan bounds
