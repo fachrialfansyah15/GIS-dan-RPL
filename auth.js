@@ -208,7 +208,7 @@ class AuthSystem {
         setTimeout(() => {
             // Demo admin credentials only
             const demoAdmin = {
-                'admin': { password: 'admin123', isAdmin: true, adminCode: 'ADMIN2024' }
+                'sipatujuadmin': { password: 'sipatuju2025', isAdmin: true, adminCode: 'SIPATUJU2025' }
             };
 
             // Get registered users from localStorage
