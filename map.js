@@ -31,11 +31,17 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
       if (window._map) setTimeout(() => window._map.invalidateSize(), 150);
     };
 
-    toggle.addEventListener('click', (e) => {
+    const handleToggle = (e) => {
       e.stopPropagation();
+      if (e.cancelable) e.preventDefault();
       if (menu.classList.contains('open')) closeMenu();
       else openMenu();
-    });
+    };
+
+    // Open instantly on touch devices
+    toggle.addEventListener('touchstart', handleToggle, { passive: false });
+    // Fallback for click (desktop and some mobiles)
+    toggle.addEventListener('click', handleToggle);
 
     backdrop.addEventListener('click', closeMenu);
 

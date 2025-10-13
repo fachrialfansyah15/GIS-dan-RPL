@@ -5,6 +5,11 @@
     box-sizing: border-box;
 }
 
+/* Mobile: align header content with page gutters */
+@media (max-width: 900px) {
+  .header { padding: 0 16px; }
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f5f5f5;
@@ -15,6 +20,7 @@ body {
 /* Base & Reset (mobile rendering stability) */
 html, body {
     height: 100%;
+    margin: 0; /* eliminate 8px default margin causing top gap */
     background: #f3f4f6; /* solid base to avoid gradient bleed */
     overscroll-behavior: none; /* reduce Android blue glow/tearing */
     -webkit-tap-highlight-color: transparent;
@@ -839,7 +845,8 @@ body { overflow-x: hidden; }
   .map-box-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 80px);
+    /* Use dynamic viewport to include mobile browser UI correctly */
+    min-height: calc(100dvh - 60px); /* header = 60px */
     border-radius: 0;
     max-width: 100%;
   }
@@ -855,20 +862,60 @@ body { overflow-x: hidden; }
   }
   
   .map-box-container .sidebar.mobile-open {
-    max-height: 50vh;
+    max-height: 45dvh;
     padding: 16px;
     overflow-y: auto;
   }
   
   .map-box-container .map-container {
     flex: 1;
-    min-height: 0;
+    /* Ensure visible map area even when address bar is shown */
+    min-height: calc(100dvh - 120px); /* header (60) + quick actions bar (~60) */
   }
   
-  /* Compact sidebar sections for mobile */
-  .map-box-container .sidebar-section {
-    margin-bottom: 16px;
+  .map-box-container .map-container #map {
+    height: calc(100dvh - 120px) !important;
   }
+}
+
+/* Compact sidebar sections for mobile */
+.map-box-container .sidebar-section {
+  margin-bottom: 16px;
+}
+
+.map-box-container .sidebar-section h3 {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+/* Smaller tool buttons */
+.map-box-container .tool-btn {
+  padding: 8px;
+  font-size: 12px;
+}
+
+/* Compact legend */
+.map-box-container .legend-item {
+  font-size: 12px;
+  gap: 6px;
+}
+
+.map-box-container .legend-color {
+  width: 14px;
+  height: 14px;
+}
+
+/* Compact stats */
+.map-box-container .stat-card {
+  padding: 10px;
+}
+
+.map-box-container .stat-value {
+  font-size: 18px;
+}
+
+.map-box-container .stat-label {
+  font-size: 11px;
   
   .map-box-container .sidebar-section h3 {
     font-size: 13px;
@@ -1807,7 +1854,11 @@ body { overflow-x: hidden; }
 .about-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 16px;
+}
+
+@media (min-width: 901px) {
+  .about-container { padding: 0 20px; }
 }
 
 .hero-section {
@@ -2620,7 +2671,7 @@ body { overflow-x: hidden; }
 .quick-action-item:hover { background: #f8f9fa; color: #764ba2; }
 @media (max-width: 900px) {
     .quick-actions-menu { display: none; }
-    .quick-actions-menu.open { display: flex; }
+    .quick-actions-menu.open { display: flex !important; }
     nav.sidebar { display: none !important; }
     .logo .desktop-logo { display: none; }
 }
@@ -2683,8 +2734,8 @@ body { overflow-x: hidden; }
 
 @media (max-width: 900px) {
     .quick-actions-bar { display: block; }
-    /* hide floating quick actions menu if bar exists */
-    .quick-actions-menu, .quick-actions-backdrop { display: none !important; }
+    /* hide floating quick actions menu if bar exists, EXCEPT when open */
+    .quick-actions-menu:not(.open), .quick-actions-backdrop:not(.show) { display: none !important; }
 }
 @media (min-width: 901px) {
     .quick-actions-bar { display: none !important; }
