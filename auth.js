@@ -238,9 +238,9 @@ class AuthSystem {
 
                 // Redirects per requirement
                 if (isAdminUser) {
-                    window.location.href = '/dashboard-admin';
+                    window.location.href = 'dashboard.html';
                 } else {
-                    window.location.href = '/dashboard-user';
+                    window.location.href = 'dashboard.html';
                 }
             } catch (err) {
                 console.error('[auth] login error', err);
