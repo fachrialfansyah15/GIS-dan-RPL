@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar Akun - SIPATUJU</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="header-left">
+        <a href="index.html" class="logo" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">
+          <i class="fas fa-road"></i>
+          <span>SIPATUJU</span>
+        </a>
+      </div>
+      <div class="header-center">
+        <h1>Daftar Akun</h1>
+      </div>
+      <div class="header-right"></div>
+    </header>
+
+    <main class="main-content" style="display:flex;justify-content:center;align-items:flex-start;padding:24px;">
+      <div class="card" style="width:100%;max-width:480px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.06);padding:24px;">
+        <h2 style="margin:0 0 12px 0;">Buat Akun Baru</h2>
+        <p style="margin:0 0 16px 0;color:#666;">Silakan isi data di bawah ini untuk membuat akun pengguna.</p>
+
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required />
+          </div>
+
+          <button type="submit" id="registerBtn" class="btn-primary" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fas fa-user-plus"></i>
+            <span>Buat Akun</span>
+          </button>
+        </form>
+
+        <p style="margin-top:16px;text-align:center;">Sudah punya akun? <a href="index.html">Masuk disini</a></p>
+        <div id="regMsg" style="margin-top:12px;font-size:14px;display:none;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const form = document.getElementById('registerForm');
+      const btn = document.getElementById('registerBtn');
+      const msg = document.getElementById('regMsg');
+
+      function showMsg(text, type){
+        msg.style.display = 'block';
+        msg.textContent = text;
+        msg.style.color = type === 'error' ? '#b91c1c' : '#065f46';
+        msg.style.background = type === 'error' ? '#fee2e2' : '#d1fae5';
+        msg.style.border = '1px solid ' + (type === 'error' ? '#fecaca' : '#a7f3d0');
+        msg.style.padding = '10px 12px';
+        msg.style.borderRadius = '8px';
+      }
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const username = (document.getElementById('username').value || '').trim();
+        const email = (document.getElementById('email').value || '').trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !email || !password){
+          showMsg('Semua kolom wajib diisi.', 'error');
+          return;
+        }
+
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span> Memproses...</span>';
+        btn.disabled = true;
+        msg.style.display = 'none';
+
+        try {
+          // Kirim ke Edge Function (butuh fungsi auth-register di Supabase)
+          const endpoint = 'https://cxcxatowzymfpasesrvp.functions.supabase.co/auth-register';
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+          });
+          const json = await resp.json().catch(()=>({ success:false, message:'Gagal mendaftar' }));
+
+          if (!resp.ok || !json.success){
+            showMsg(json.message || 'Pendaftaran gagal. Silakan coba lagi.', 'error');
+            return;
+          }
+
+          showMsg('Akun berhasil dibuat! Silakan login.', 'success');
+          setTimeout(()=>{ window.location.href = 'index.html'; }, 1200);
+        } catch (err){
+          showMsg('Terjadi kesalahan jaringan. Silakan coba lagi.', 'error');
+        } finally {
+          btn.innerHTML = original;
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
