@@ -125,7 +125,7 @@ class AuthSystem {
 
                 <div class="form-group">
                     <label for="adminCode">Admin Code</label>
-                    <input type="text" id="adminCode" name="adminCode" placeholder="Enter admin verification code" required>
+                    <input type="text" id="adminCode" name="adminCode" placeholder="Enter admin verification code (optional)">
                 </div>
 
                 <div class="form-group">
