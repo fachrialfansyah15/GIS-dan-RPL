@@ -75,26 +75,41 @@ serve(async (request: Request) => {
       .eq("username", username)
       .single();
 
-    if (error || !user || !user.password_hash) {
+    if (user && user.password_hash && !error) {
+      // Verify password using bcrypt (users table)
+      const passwordOk = await bcrypt.compare(password, user.password_hash);
+      if (!passwordOk) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Invalid credentials" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...cors } },
+        );
+      }
+      // Success (user)
       return new Response(
-        JSON.stringify({ success: false, message: "Invalid credentials" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...cors } },
+        JSON.stringify({ success: true, message: "Login success" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...cors } },
       );
     }
 
-    // Verify password using bcrypt
-    const passwordOk = await bcrypt.compare(password, user.password_hash);
-    if (!passwordOk) {
+    // Fallback: check admins table (plaintext password as per current schema)
+    const { data: adminRow, error: adminErr } = await supabase
+      .from("admins")
+      .select("id, username, password")
+      .eq("username", username)
+      .single();
+
+    if (!adminErr && adminRow && adminRow.password === password) {
+      // Success (admin)
       return new Response(
-        JSON.stringify({ success: false, message: "Invalid credentials" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...cors } },
+        JSON.stringify({ success: true, message: "Login success" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...cors } },
       );
     }
 
-    // Success
+    // Not found in users (with bcrypt) nor admins (plaintext)
     return new Response(
-      JSON.stringify({ success: true, message: "Login success" }),
-      { status: 200, headers: { "Content-Type": "application/json", ...cors } },
+      JSON.stringify({ success: false, message: "Invalid credentials" }),
+      { status: 401, headers: { "Content-Type": "application/json", ...cors } },
     );
   } catch (err) {
     console.error("[auth-login] Unexpected error:", err);

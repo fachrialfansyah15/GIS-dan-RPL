@@ -53,11 +53,18 @@
     </main>
   </div>
 
+  <!-- Supabase client and config -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SUPABASE_URL = 'https://cxcxatowzymfpasesrvp.supabase.co';
+    window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4Y3hhdG93enltZnBhc2VzcnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTY0MDIsImV4cCI6MjA3NTU5MjQwMn0.klPbBM_u-UvlG5DTMmZxRIXuczpqqLfupJUZW0gMRa0';
+  </script>
   <script>
     (function(){
       const form = document.getElementById('registerForm');
       const btn = document.getElementById('registerBtn');
       const msg = document.getElementById('regMsg');
+      const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
 
       function showMsg(text, type){
         msg.style.display = 'block';
@@ -79,6 +86,10 @@
           showMsg('Semua kolom wajib diisi.', 'error');
           return;
         }
+        if (!supabase){
+          showMsg('Konfigurasi Supabase tidak ditemukan.', 'error');
+          return;
+        }
 
         const original = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span> Memproses...</span>';
@@ -86,24 +97,46 @@
         msg.style.display = 'none';
 
         try {
-          // Kirim ke Edge Function (butuh fungsi auth-register di Supabase)
-          const endpoint = 'https://cxcxatowzymfpasesrvp.functions.supabase.co/auth-register';
-          const resp = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-          });
-          const json = await resp.json().catch(()=>({ success:false, message:'Gagal mendaftar' }));
-
-          if (!resp.ok || !json.success){
-            showMsg(json.message || 'Pendaftaran gagal. Silakan coba lagi.', 'error');
+          // Cek email/username sudah terdaftar
+          const { data: existingByEmail, error: e1 } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle();
+          if (e1) throw e1;
+          if (existingByEmail) {
+            showMsg('Email sudah terdaftar.', 'error');
             return;
           }
+
+          const { data: existingByUsername, error: e2 } = await supabase
+            .from('users')
+            .select('id')
+            .eq('username', username)
+            .maybeSingle();
+          if (e2) throw e2;
+          if (existingByUsername) {
+            showMsg('Username sudah digunakan.', 'error');
+            return;
+          }
+
+          // Insert sesuai kolom tabel users: username, email, password, role, created_at
+          const payload = {
+            username,
+            email,
+            password, // catatan: plaintext sesuai struktur saat ini
+            role: 'user',
+            created_at: new Date().toISOString()
+          };
+
+          const { error: insertErr } = await supabase.from('users').insert([payload]);
+          if (insertErr) throw insertErr;
 
           showMsg('Akun berhasil dibuat! Silakan login.', 'success');
           setTimeout(()=>{ window.location.href = 'index.html'; }, 1200);
         } catch (err){
-          showMsg('Terjadi kesalahan jaringan. Silakan coba lagi.', 'error');
+          console.error('[register] error', err);
+          showMsg('Pendaftaran gagal. Silakan coba lagi.', 'error');
         } finally {
           btn.innerHTML = original;
           btn.disabled = false;
