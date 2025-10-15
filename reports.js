@@ -58,65 +58,104 @@ class ReportsPage {
         }
     }
 
-    loadReports() {
+    async loadReports() {
         const reportsList = document.getElementById('reportsList');
         if (!reportsList) return;
 
-        // Get reports from localStorage
-        const reports = JSON.parse(localStorage.getItem('roadDamageReports') || '[]');
-        
-        if (reports.length === 0) {
+        // Supabase client
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) {
+            reportsList.innerHTML = '<div class="no-reports">Supabase config missing.</div>';
+            return;
+        }
+
+        const isAdmin = !!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin());
+        const userId = window.auth?.getUserId ? window.auth.getUserId() : null;
+
+        let rows = [];
+        try {
+            if (isAdmin) {
+                const { data, error } = await supabase
+                    .from('jalan_rusak')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (error) throw error; rows = data || [];
+            } else {
+                if (!userId) {
+                    reportsList.innerHTML = '<div class="no-reports">Please login to view your reports.</div>';
+                    return;
+                }
+                const { data, error } = await supabase
+                    .from('laporan_masuk')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+                if (error) throw error; rows = data || [];
+            }
+        } catch (e) {
+            reportsList.innerHTML = `<div class="no-reports">Failed to load reports: ${e.message}</div>`;
+            return;
+        }
+
+        if (!rows.length) {
             reportsList.innerHTML = `
                 <div class="no-reports">
                     <i class="fas fa-clipboard-list"></i>
                     <h3>No Reports Found</h3>
-                    <p>No road damage reports have been submitted yet.</p>
+                    <p>${isAdmin ? 'No validated reports yet.' : 'You have not submitted any reports.'}</p>
                 </div>
             `;
             return;
         }
 
-        // Sort reports by date (newest first)
-        reports.sort((a, b) => new Date(b.date) - new Date(a.date));
+        function mapPriority(jenis) {
+            const s = String(jenis || '').toLowerCase();
+            if (s.includes('berat')) return 'high';
+            if (s.includes('sedang')) return 'medium';
+            if (s.includes('ringan')) return 'low';
+            return 'low';
+        }
 
-        reportsList.innerHTML = reports.map(report => `
-            <div class="report-card" data-status="${report.status}" data-priority="${report.priority}">
+        const html = rows.map(r => {
+            const status = (r.status || (isAdmin ? 'reported' : 'reported')).toString().toLowerCase();
+            const priority = mapPriority(r.jenis_kerusakan);
+            const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString() : '';
+            const dmg = r.jenis_kerusakan || '-';
+            const loc = r.nama_jalan || `${r.Latitude || ''}, ${r.Longitude || ''}`;
+            return `
+            <div class="report-card" data-status="${status}" data-priority="${priority}">
                 <div class="report-header">
-                    <div class="report-id">${report.id}</div>
-                    <div class="report-status ${report.status}">${report.status.replace('_', ' ')}</div>
+                    <div class="report-id">${r.id}</div>
+                    <div class="report-status ${status}">${status.replace('_',' ')}</div>
                 </div>
                 <div class="report-content">
-                    <h3>${report.damageType.charAt(0).toUpperCase() + report.damageType.slice(1)}</h3>
-                    <p class="report-location">
-                        <i class="fas fa-map-marker-alt"></i>
-                        ${report.location}
-                    </p>
-                    <p class="report-description">${report.description}</p>
+                    <h3>${dmg}</h3>
+                    <p class="report-location"><i class="fas fa-map-marker-alt"></i>${loc}</p>
                     <div class="report-meta">
-                        <span class="report-priority ${report.priority}">
-                            <i class="fas fa-flag"></i>
-                            ${report.priority} Priority
-                        </span>
-                        <span class="report-date">
-                            <i class="fas fa-clock"></i>
-                            ${new Date(report.date).toLocaleDateString()}
-                        </span>
+                        <span class="report-priority ${priority}"><i class="fas fa-flag"></i>${priority} Priority</span>
+                        <span class="report-date"><i class="fas fa-clock"></i>${dateStr}</span>
                     </div>
                 </div>
                 <div class="report-actions">
-                    <button class="btn-secondary" onclick="this.viewReport('${report.id}')">
-                        <i class="fas fa-eye"></i>
-                        View Details
-                    </button>
-                    ${window.auth.isUserAdmin() ? `
-                        <button class="btn-primary" onclick="this.updateStatus('${report.id}')">
-                            <i class="fas fa-edit"></i>
-                            Update Status
-                        </button>
-                    ` : ''}
+                    <button class="btn-secondary" data-view-id="${r.id}"><i class="fas fa-eye"></i>View Details</button>
+                    ${isAdmin ? `<button class="btn-primary" data-update-id="${r.id}"><i class="fas fa-edit"></i>Update Status</button>` : ''}
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
+
+        reportsList.innerHTML = html;
+
+        // Wire actions
+        reportsList.querySelectorAll('[data-view-id]').forEach(btn => btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-view-id');
+            this.viewReportSupabase(id, isAdmin);
+        }));
+        if (isAdmin) {
+            reportsList.querySelectorAll('[data-update-id]').forEach(btn => btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-update-id');
+                this.updateStatusSupabase(id);
+            }));
+        }
     }
 
     filterReports() {
@@ -139,28 +178,24 @@ class ReportsPage {
         });
     }
 
-    viewReport(reportId) {
-        const reports = JSON.parse(localStorage.getItem('roadDamageReports') || '[]');
-        const report = reports.find(r => r.id === reportId);
-        
-        if (report) {
-            alert(`Report Details:\n\nID: ${report.id}\nType: ${report.damageType}\nLocation: ${report.location}\nPriority: ${report.priority}\nStatus: ${report.status}\nDescription: ${report.description}\nReporter: ${report.reporter}\nDate: ${new Date(report.date).toLocaleString()}`);
-        }
+    async viewReportSupabase(reportId, isAdmin) {
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) return;
+        const table = isAdmin ? 'jalan_rusak' : 'laporan_masuk';
+        const { data, error } = await supabase.from(table).select('*').eq('id', reportId).single();
+        if (error || !data) return;
+        alert(`Report Details\n\nID: ${data.id}\nJenis: ${data.jenis_kerusakan || '-'}\nLokasi: ${data.nama_jalan || '-'}\nStatus: ${data.status || '-'}\nTanggal: ${data.created_at ? new Date(data.created_at).toLocaleString() : '-'}`);
     }
 
-    updateStatus(reportId) {
-        const reports = JSON.parse(localStorage.getItem('roadDamageReports') || '[]');
-        const reportIndex = reports.findIndex(r => r.id === reportId);
-        
-        if (reportIndex !== -1) {
-            const newStatus = prompt('Update status (reported/in_progress/completed):', reports[reportIndex].status);
-            if (newStatus && ['reported', 'in_progress', 'completed'].includes(newStatus)) {
-                reports[reportIndex].status = newStatus;
-                localStorage.setItem('roadDamageReports', JSON.stringify(reports));
-                this.loadReports();
-                this.showMessage('Report status updated successfully!', 'success');
-            }
-        }
+    async updateStatusSupabase(reportId) {
+        // Optional: admin quick status update on this page (keep simple)
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) return;
+        if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) return;
+        const current = prompt('Set status (reported/in_progress/completed):', 'in_progress');
+        if (!current || !['reported','in_progress','completed'].includes(current)) return;
+        const { error } = await supabase.from('jalan_rusak').update({ status: current }).eq('id', reportId);
+        if (!error) { this.loadReports(); this.showMessage('Report status updated successfully!', 'success'); }
     }
 
     showMessage(message, type) {

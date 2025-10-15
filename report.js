@@ -278,7 +278,15 @@ form.addEventListener("submit", async (e) => {
     foto_jalan_url = data.publicUrl;
   }
 
-  // Insert ke tabel laporan_masuk
+  // Ambil user_id dari sesi auth
+  let user_id = null;
+  try { user_id = window.auth?.getUserId ? window.auth.getUserId() : null; } catch (_) {}
+  if (!user_id) {
+    alert("Anda harus login untuk mengirim laporan.");
+    return;
+  }
+
+  // Insert ke tabel laporan_masuk dengan user_id dan status awal
   const { error: insertError } = await supabase.from("laporan_masuk").insert([
     {
       tanggal_survey,
@@ -287,6 +295,8 @@ form.addEventListener("submit", async (e) => {
       foto_jalan: foto_jalan_url,
       Latitude,
       Longitude,
+      user_id,
+      status: 'reported'
     },
   ]);
 

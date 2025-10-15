@@ -24,13 +24,13 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 
 let markersLayer = L.layerGroup().addTo(map);
 
-// === MUAT DATA LAPORAN YANG BELUM DIVALIDASI ===
+// === MUAT DATA LAPORAN MASUK (menunggu validasi) ===
 async function loadPendingReports() {
   if (!assertAdminOrRedirect()) return;
   const { data, error } = await supabaseClient
-    .from("jalan_rusak")
+    .from("laporan_masuk")
     .select("*")
-    .eq("status", "pending");
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error("Gagal memuat data:", error);
@@ -91,27 +91,57 @@ async function loadPendingReports() {
 
   // === EVENT UNTUK TOMBOL SETUJUI / TOLAK ===
   document.querySelectorAll(".approve-btn").forEach((btn) =>
-    btn.addEventListener("click", () => ubahStatusLaporan(btn.dataset.id, "disetujui"))
+    btn.addEventListener("click", () => setujuiLaporan(btn.dataset.id))
   );
 
   document.querySelectorAll(".reject-btn").forEach((btn) =>
-    btn.addEventListener("click", () => ubahStatusLaporan(btn.dataset.id, "ditolak"))
+    btn.addEventListener("click", () => tolakLaporan(btn.dataset.id))
   );
 }
 
-// === UPDATE STATUS LAPORAN ===
-async function ubahStatusLaporan(id, statusBaru) {
+// === SETUJUI: pindahkan dari laporan_masuk ke jalan_rusak dengan admin_id ===
+async function setujuiLaporan(id) {
   if (!assertAdminOrRedirect()) return;
-  const { error } = await supabaseClient
-    .from("jalan_rusak")
-    .update({ status: statusBaru })
-    .eq("id", id);
+  try {
+    const adminId = window.auth?.getUserId ? window.auth.getUserId() : null;
+    if (!adminId || !window.auth?.isUserAdmin()) {
+      alert('Akses ditolak.');
+      return;
+    }
+    const { data: src, error: e1 } = await supabaseClient.from('laporan_masuk').select('*').eq('id', id).single();
+    if (e1 || !src) throw e1 || new Error('Tidak ditemukan');
 
+    const insertData = {
+      tanggal_survey: src.tanggal_survey,
+      nama_jalan: src.nama_jalan,
+      jenis_kerusakan: src.jenis_kerusakan,
+      foto_jalan: src.foto_jalan,
+      Latitude: src.Latitude,
+      Longitude: src.Longitude,
+      status: 'pending',
+      user_id: src.user_id || null,
+      admin_id: adminId
+    };
+    const { error: e2 } = await supabaseClient.from('jalan_rusak').insert([insertData]);
+    if (e2) throw e2;
+    const { error: e3 } = await supabaseClient.from('laporan_masuk').delete().eq('id', id);
+    if (e3) console.warn('gagal hapus sumber:', e3);
+    alert('Laporan disetujui dan dipindahkan.');
+    loadPendingReports();
+  } catch (err) {
+    console.error(err);
+    alert('Gagal menyetujui laporan.');
+  }
+}
+
+// === TOLAK: update status di laporan_masuk ===
+async function tolakLaporan(id) {
+  if (!assertAdminOrRedirect()) return;
+  const { error } = await supabaseClient.from('laporan_masuk').update({ status: 'ditolak' }).eq('id', id);
   if (error) {
-    alert("Gagal memperbarui status laporan.");
-    console.error(error);
+    alert('Gagal menolak laporan.');
   } else {
-    alert(`Laporan berhasil diubah menjadi '${statusBaru}'.`);
+    alert('Laporan ditolak.');
     loadPendingReports();
   }
 }

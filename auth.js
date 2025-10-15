@@ -4,6 +4,8 @@ class AuthSystem {
     constructor() {
         this.currentUser = null;
         this.isAdmin = false;
+        this.userId = null;
+        this.supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
         this.init();
     }
 
@@ -142,8 +144,8 @@ class AuthSystem {
         } else {
             form.innerHTML = `
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <label for="username">Email</label>
+                    <input type="email" id="username" name="username" required>
                 </div>
                 
                 <div class="form-group">
@@ -204,62 +206,61 @@ class AuthSystem {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
         submitBtn.disabled = true;
 
-        // Simulate API call
-        setTimeout(() => {
-            // Demo admin credentials only
-            const demoAdmin = {
-                'sipatujuadmin': { password: 'sipatuju2025', isAdmin: true, adminCode: 'SIPATUJU2025' }
-            };
+        (async () => {
+            try {
+                // Call Supabase Edge Function for authentication
+                const endpoint = 'https://cxcxatowzymfpasesrvp.functions.supabase.co/auth-login';
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const json = await resp.json().catch(() => ({}));
 
-            // Get registered users from localStorage
-            const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
-
-            // Check demo admin first
-            if (demoAdmin[username.toLowerCase()]) {
-                const user = demoAdmin[username.toLowerCase()];
-                if (user.password === password) {
-                    if (isAdminLogin) {
-                        if (user.isAdmin && adminCode === user.adminCode) {
-                            this.loginSuccess(username, true, remember);
-                        } else {
-                            this.showMessage('Invalid admin verification code', 'error');
-                        }
-                    } else {
-                        this.showMessage('Admin must use admin login tab', 'error');
-                    }
-                } else {
-                    this.showMessage('Invalid admin password', 'error');
+                if (!resp.ok || !json || json.success !== true) {
+                    this.showMessage('Username or password incorrect.', 'error');
+                    return;
                 }
-            }
-            // Check registered users
-            else if (registeredUsers[username.toLowerCase()]) {
-                const user = registeredUsers[username.toLowerCase()];
-                if (user.password === password) {
-                    if (isAdminLogin) {
-                        this.showMessage('Regular users cannot use admin login', 'error');
-                    } else {
-                        this.loginSuccess(username, false, remember);
-                    }
-                } else {
-                    this.showMessage('Invalid password', 'error');
-                }
-            } else {
-                this.showMessage('User not found. Please register first.', 'error');
-            }
 
-            // Reset button
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        }, 1500);
+                // Determine role by username per requirement
+                const isAdminUser = (username === 'sipatujuadmin');
+                // Persist flags as requested
+                if (isAdminUser) {
+                    localStorage.setItem('isAdmin', 'true');
+                    localStorage.removeItem('isUser');
+                } else {
+                    localStorage.setItem('isUser', 'true');
+                    localStorage.removeItem('isAdmin');
+                }
+
+                // Keep existing session structure for compatibility
+                this.loginSuccess(username, isAdminUser, remember, null);
+
+                // Redirects per requirement
+                if (isAdminUser) {
+                    window.location.href = '/dashboard-admin';
+                } else {
+                    window.location.href = '/dashboard-user';
+                }
+            } catch (err) {
+                console.error('[auth] login error', err);
+                this.showMessage('Login failed. Please try again.', 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })();
     }
 
-    loginSuccess(username, isAdmin, remember) {
+    loginSuccess(username, isAdmin, remember, id) {
         this.currentUser = username;
         this.isAdmin = isAdmin;
+        this.userId = id || null;
 
         // Store in localStorage if remember is checked
         if (remember) {
             localStorage.setItem('roadMonitorUser', JSON.stringify({
+                id: this.userId,
                 username: username,
                 isAdmin: isAdmin,
                 timestamp: Date.now()
@@ -268,6 +269,7 @@ class AuthSystem {
 
         // Store in sessionStorage always
         sessionStorage.setItem('roadMonitorUser', JSON.stringify({
+            id: this.userId,
             username: username,
             isAdmin: isAdmin,
             timestamp: Date.now()
@@ -291,6 +293,7 @@ class AuthSystem {
             if (Date.now() - userData.timestamp < 24 * 60 * 60 * 1000) {
                 this.currentUser = userData.username;
                 this.isAdmin = userData.isAdmin;
+                this.userId = userData.id || null;
                 return;
             } else {
                 sessionStorage.removeItem('roadMonitorUser');
@@ -305,6 +308,7 @@ class AuthSystem {
             if (Date.now() - userData.timestamp < 7 * 24 * 60 * 60 * 1000) {
                 this.currentUser = userData.username;
                 this.isAdmin = userData.isAdmin;
+                this.userId = userData.id || null;
                 return;
             } else {
                 localStorage.removeItem('roadMonitorUser');
@@ -321,6 +325,7 @@ class AuthSystem {
             if (Date.now() - userData.timestamp < 24 * 60 * 60 * 1000) {
                 this.currentUser = userData.username;
                 this.isAdmin = userData.isAdmin;
+                this.userId = userData.id || null;
                 // Redirect to dashboard if already logged in and on login page
                 if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
                     window.location.href = 'dashboard.html';
@@ -339,6 +344,7 @@ class AuthSystem {
             if (Date.now() - userData.timestamp < 7 * 24 * 60 * 60 * 1000) {
                 this.currentUser = userData.username;
                 this.isAdmin = userData.isAdmin;
+                this.userId = userData.id || null;
                 // Redirect to dashboard if already logged in and on login page
                 if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
                     window.location.href = 'dashboard.html';
@@ -353,6 +359,8 @@ class AuthSystem {
     isAuthenticated() {
         return this.currentUser !== null;
     }
+
+    getUserId() { return this.userId; }
 
 
     logout() {
