@@ -77,8 +77,7 @@ class ReportsPage {
             if (isAdmin) {
                 const { data, error } = await supabase
                     .from('jalan_rusak')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                    .select('*');
                 if (error) throw error; rows = data || [];
             } else {
                 if (!userId) {
@@ -88,14 +87,25 @@ class ReportsPage {
                 const { data, error } = await supabase
                     .from('laporan_masuk')
                     .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false });
+                    .eq('user_id', userId);
                 if (error) throw error; rows = data || [];
             }
         } catch (e) {
             reportsList.innerHTML = `<div class="no-reports">Failed to load reports: ${e.message}</div>`;
             return;
         }
+
+        // Sort client-side: prefer created_at, fallback tanggal_survey, then id
+        rows.sort((a, b) => {
+            const da = a.created_at || a.tanggal_survey || '';
+            const db = b.created_at || b.tanggal_survey || '';
+            const ta = da ? new Date(da).getTime() : 0;
+            const tb = db ? new Date(db).getTime() : 0;
+            if (tb !== ta) return tb - ta;
+            const ia = typeof a.id === 'number' ? a.id : parseInt(a.id || '0', 10) || 0;
+            const ib = typeof b.id === 'number' ? b.id : parseInt(b.id || '0', 10) || 0;
+            return ib - ia;
+        });
 
         if (!rows.length) {
             reportsList.innerHTML = `
@@ -119,7 +129,8 @@ class ReportsPage {
         const html = rows.map(r => {
             const status = (r.status || (isAdmin ? 'reported' : 'reported')).toString().toLowerCase();
             const priority = mapPriority(r.jenis_kerusakan);
-            const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString() : '';
+            const dateRaw = r.created_at || r.tanggal_survey || '';
+            const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString() : '';
             const dmg = r.jenis_kerusakan || '-';
             const loc = r.nama_jalan || `${r.Latitude || ''}, ${r.Longitude || ''}`;
             return `
