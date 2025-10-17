@@ -40,6 +40,13 @@
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required />
           </div>
+          <div class="form-group">
+            <label for="trialDays">Masa Aktif Pendaftaran</label>
+            <select id="trialDays" name="trialDays">
+              <option value="1">1 hari</option>
+              <option value="2">2 hari</option>
+            </select>
+          </div>
 
           <button type="submit" id="registerBtn" class="btn-primary" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
             <i class="fas fa-user-plus"></i>
@@ -81,6 +88,7 @@
         const username = (document.getElementById('username').value || '').trim();
         const email = (document.getElementById('email').value || '').trim();
         const password = document.getElementById('password').value;
+        const trialDays = parseInt(document.getElementById('trialDays').value || '1', 10);
 
         if (!username || !email || !password){
           showMsg('Semua kolom wajib diisi.', 'error');
@@ -131,6 +139,14 @@
 
           const { error: insertErr } = await supabase.from('users').insert([payload]);
           if (insertErr) throw insertErr;
+
+          // Hitung masa aktif (created_at + trialDays) dan simpan lokal untuk dipakai UI/guard
+          const createdAt = new Date();
+          const expiresAt = new Date(createdAt.getTime() + trialDays * 24 * 60 * 60 * 1000);
+          try {
+            localStorage.setItem('registrationTrialDays', String(trialDays));
+            localStorage.setItem('registrationExpiresAt', expiresAt.toISOString());
+          } catch (_) {}
 
           showMsg('Akun berhasil dibuat! Silakan login.', 'success');
           setTimeout(()=>{ window.location.href = 'index.html'; }, 1200);

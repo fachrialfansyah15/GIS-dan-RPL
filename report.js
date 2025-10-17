@@ -17,10 +17,10 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // Marker untuk menandai lokasi yang dipilih
 let marker = null;
 
-// Bounds Kota Palu (untuk validasi)
+// Bounds Kota Palu (untuk validasi) - diperluas agar mencakup Tawaeli (utara)
 const boundsPalu = L.latLngBounds(
-  [-0.98, 119.78],  // Southwest
-  [-0.80, 119.94]   // Northeast
+  [-1.02, 119.72],  // Southwest (lebih lebar)
+  [-0.70, 120.02]   // Northeast (menjangkau Tawaeli + buffer)
 );
 
 // ========== Reverse Geocoding Function ==========

@@ -1,5 +1,3 @@
-// Dashboard functionality for Road Monitor Palu
-
 class Dashboard {
     constructor() {
         this.map = null;

@@ -111,8 +111,8 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
   // Kecamatan: Palu Barat, Palu Selatan, Palu Timur, Palu Utara, Tatanga, Ulujadi, Mantikulore, Tawaeli
   // Koordinat mencakup seluruh wilayah administratif Kota Palu + buffer untuk panning
   const boundsPalu = L.latLngBounds(
-    [-0.98, 119.78], // Southwest corner (batas selatan-barat) - diperlebar
-    [-0.80, 119.94]  // Northeast corner (batas utara-timur) - diperlebar
+    [-1.02, 119.72], // Southwest corner (lebih lebar)
+    [-0.70, 120.02]  // Northeast corner (menjangkau Tawaeli di utara + buffer)
   );
 
   // Legend filter for severity (clickable)

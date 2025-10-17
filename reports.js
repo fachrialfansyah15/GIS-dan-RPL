@@ -149,7 +149,7 @@ class ReportsPage {
                 </div>
                 <div class="report-actions">
                     <button class="btn-secondary" data-view-id="${r.id}"><i class="fas fa-eye"></i>View Details</button>
-                    ${isAdmin ? `<button class="btn-primary" data-update-id="${r.id}"><i class="fas fa-edit"></i>Update Status</button>` : ''}
+                    ${isAdmin ? `<button class="btn-primary" data-delete-id="${r.id}"><i class="fas fa-trash"></i>Hapus</button>` : ''}
                 </div>
             </div>`;
         }).join('');
@@ -162,9 +162,9 @@ class ReportsPage {
             this.viewReportSupabase(id, isAdmin);
         }));
         if (isAdmin) {
-            reportsList.querySelectorAll('[data-update-id]').forEach(btn => btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-update-id');
-                this.updateStatusSupabase(id);
+            reportsList.querySelectorAll('[data-delete-id]').forEach(btn => btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-delete-id');
+                this.deleteReportSupabase(id);
             }));
         }
     }
@@ -198,15 +198,14 @@ class ReportsPage {
         alert(`Report Details\n\nID: ${data.id}\nJenis: ${data.jenis_kerusakan || '-'}\nLokasi: ${data.nama_jalan || '-'}\nStatus: ${data.status || '-'}\nTanggal: ${data.created_at ? new Date(data.created_at).toLocaleString() : '-'}`);
     }
 
-    async updateStatusSupabase(reportId) {
-        // Optional: admin quick status update on this page (keep simple)
+    async deleteReportSupabase(reportId) {
         const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
         if (!supabase) return;
         if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) return;
-        const current = prompt('Set status (reported/in_progress/completed):', 'in_progress');
-        if (!current || !['reported','in_progress','completed'].includes(current)) return;
-        const { error } = await supabase.from('jalan_rusak').update({ status: current }).eq('id', reportId);
-        if (!error) { this.loadReports(); this.showMessage('Report status updated successfully!', 'success'); }
+        const ok = confirm('Hapus laporan ini? Tindakan ini akan menandai laporan sebagai dihapus.');
+        if (!ok) return;
+        const { error } = await supabase.from('jalan_rusak').update({ status: 'deleted' }).eq('id', reportId);
+        if (!error) { this.loadReports(); this.showMessage('Laporan berhasil dihapus.', 'success'); }
     }
 
     showMessage(message, type) {
