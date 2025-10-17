@@ -483,21 +483,21 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     const locateBtn = document.getElementById('locate');
     
     if (zoomInBtn) {
-      zoomInBtn.addEventListener('click', () => {
-        if (window._map) window._map.zoomIn();
-      });
+      const zoomIn = () => { if (window._map) window._map.zoomIn(); };
+      zoomInBtn.addEventListener('click', zoomIn);
+      zoomInBtn.addEventListener('touchstart', (e) => { e.preventDefault(); zoomIn(); }, { passive: false });
     }
     
     if (zoomOutBtn) {
-      zoomOutBtn.addEventListener('click', () => {
-        if (window._map) window._map.zoomOut();
-      });
+      const zoomOut = () => { if (window._map) window._map.zoomOut(); };
+      zoomOutBtn.addEventListener('click', zoomOut);
+      zoomOutBtn.addEventListener('touchstart', (e) => { e.preventDefault(); zoomOut(); }, { passive: false });
     }
     
     if (locateBtn) {
-      locateBtn.addEventListener('click', () => {
-        autoLocateUserWithBounds(window._map, boundsPalu);
-      });
+      const locate = () => { autoLocateUserWithBounds(window._map, boundsPalu); };
+      locateBtn.addEventListener('click', locate);
+      locateBtn.addEventListener('touchstart', (e) => { e.preventDefault(); locate(); }, { passive: false });
     }
     
     // Mobile: Toggle map tools sidebar via tools dropdown
@@ -557,14 +557,19 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     const chipLocate = document.getElementById('chipLocate');
     const chipZoomIn = document.getElementById('chipZoomIn');
 
-    if (chipStats) chipStats.addEventListener('click', () => openSidebarAndFocus('Statistik'));
-    if (chipTools) chipTools.addEventListener('click', () => openSidebarAndFocus('Alat Peta'));
-    if (chipLegend) chipLegend.addEventListener('click', () => openSidebarAndFocus('Legenda'));
-    if (chipLocate) chipLocate.addEventListener('click', () => {
+    const addTap = (el, cb) => {
+      if (!el) return;
+      el.addEventListener('click', cb);
+      el.addEventListener('touchstart', (e) => { e.preventDefault(); cb(); }, { passive: false });
+    };
+    addTap(chipStats, () => openSidebarAndFocus('Statistik'));
+    addTap(chipTools, () => openSidebarAndFocus('Alat Peta'));
+    addTap(chipLegend, () => openSidebarAndFocus('Legenda'));
+    addTap(chipLocate, () => {
       const btn = document.getElementById('locate');
       if (btn) btn.click();
     });
-    if (chipZoomIn) chipZoomIn.addEventListener('click', () => {
+    addTap(chipZoomIn, () => {
       const btn = document.getElementById('zoomIn');
       if (btn) btn.click();
     });
