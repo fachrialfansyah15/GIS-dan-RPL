@@ -316,7 +316,7 @@ class AboutPage {
             ],
             team: [
                 'Fachri Alfansyah - Developer',
-                'Ray Agung - GIS Specialist',
+                'Ray Agung - Sistem Analisis',
                 'Auralia Zalsabillah - UI/UX Designer'
             ],
             contact: {

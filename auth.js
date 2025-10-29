@@ -209,10 +209,13 @@ class AuthSystem {
         (async () => {
             try {
                 // Call Supabase Edge Function for authentication
-                const endpoint = 'https://cxcxatowzymfpasesrvp.functions.supabase.co/auth-login';
+                const endpoint = 'https://cxcxatowzymfpasesrvp.supabase.co/functions/v1/auth-login';
                 const resp = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.SUPABASE_KEY}`
+                    },
                     body: JSON.stringify({ username, password })
                 });
                 const json = await resp.json().catch(() => ({}));
@@ -222,9 +225,12 @@ class AuthSystem {
                     return;
                 }
 
-                // Determine role by username per requirement
-                const isAdminUser = (username === 'sipatujuadmin');
-                // Persist flags as requested
+                // Determine role from server response (fallback to username check if missing)
+                const role = (json.role === 'admin' || json.role === 'user') ? json.role : (username === 'sipatujuadmin' ? 'admin' : 'user');
+                const isAdminUser = role === 'admin';
+                const idFromServer = json.id || null;
+
+                // Persist flags
                 if (isAdminUser) {
                     localStorage.setItem('isAdmin', 'true');
                     localStorage.removeItem('isUser');
@@ -234,7 +240,7 @@ class AuthSystem {
                 }
 
                 // Keep existing session structure for compatibility
-                this.loginSuccess(username, isAdminUser, remember, null);
+                this.loginSuccess(username, isAdminUser, remember, idFromServer);
 
                 // Redirects per requirement
                 if (isAdminUser) {
@@ -426,7 +432,7 @@ class AuthSystem {
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Create New Account</h3>
+                    <h3>Buat Akun Baru</h3>
                     <span class="close">&times;</span>
                 </div>
                 <div class="modal-body">
@@ -437,27 +443,27 @@ class AuthSystem {
                         </div>
                         
                         <div class="form-group">
+                            <label for="regPassword">Kata Sandi *</label>
+                            <input type="password" id="regPassword" name="password" required minlength="6">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="regConfirmPassword">Konfirmasi Kata Sandi *</label>
+                            <input type="password" id="regConfirmPassword" name="confirmPassword" required>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="regEmail">Email *</label>
                             <input type="email" id="regEmail" name="email" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="regPassword">Password *</label>
-                            <input type="password" id="regPassword" name="password" required minlength="6">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="regConfirmPassword">Confirm Password *</label>
-                            <input type="password" id="regConfirmPassword" name="confirmPassword" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="regFullName">Full Name *</label>
+                            <label for="regFullName">Nama Lengkap *</label>
                             <input type="text" id="regFullName" name="fullName" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="regPhone">Phone Number</label>
+                            <label for="regPhone">Nomor Telepon</label>
                             <input type="tel" id="regPhone" name="phone">
                         </div>
                         
@@ -465,13 +471,13 @@ class AuthSystem {
                             <label class="checkbox-label">
                                 <input type="checkbox" id="regTerms" required>
                                 <span class="checkmark"></span>
-                                I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="privacy-link">Privacy Policy</a>
+                                Saya setuju dengan <a href="#" class="terms-link">Syarat Layanan</a> dan <a href="#" class="privacy-link">Kebijakan Privasi</a>
                             </label>
                         </div>
                         
                         <div class="form-actions">
-                            <button type="button" class="btn-secondary" id="cancelRegistration">Cancel</button>
-                            <button type="submit" class="btn-primary">Create Account</button>
+                            <button type="button" class="btn-secondary" id="cancelRegistration">Batal</button>
+                            <button type="submit" class="btn-primary">Buat Akun</button>
                         </div>
                     </form>
                 </div>
@@ -524,8 +530,8 @@ class AuthSystem {
     handleRegistration(form) {
         const formData = new FormData(form);
         const userData = {
-            username: formData.get('username').toLowerCase(),
-            email: formData.get('email'),
+            username: String(formData.get('username') || '').toLowerCase(),
+            email: String(formData.get('email') || '').toLowerCase(),
             password: formData.get('password'),
             confirmPassword: formData.get('confirmPassword'),
             fullName: formData.get('fullName'),
@@ -534,47 +540,74 @@ class AuthSystem {
             registeredAt: new Date().toISOString()
         };
 
-        // Validation
+        // Validation dasar
         if (userData.password !== userData.confirmPassword) {
-            this.showMessage('Passwords do not match', 'error');
+            this.showMessage('Kata sandi tidak cocok', 'error');
+            return;
+        }
+        if (!userData.password || userData.password.length < 6) {
+            this.showMessage('Kata sandi minimal 6 karakter', 'error');
             return;
         }
 
-        if (userData.password.length < 6) {
-            this.showMessage('Password must be at least 6 characters long', 'error');
+        // Inisialisasi Supabase client
+        const supa = (window.supabase && window.supabase.createClient && window.SUPABASE_URL && window.SUPABASE_KEY)
+            ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY)
+            : null;
+        if (!supa) {
+            this.showMessage('Konfigurasi Supabase tidak ditemukan.', 'error');
             return;
         }
 
-        // Check if username already exists
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '{}');
-        if (registeredUsers[userData.username]) {
-            this.showMessage('Username already exists. Please choose a different username.', 'error');
-            return;
-        }
+        (async () => {
+            try {
+                // Uniqueness check username/email
+                const { data: existUser } = await supa.from('users').select('id').eq('username', userData.username).maybeSingle();
+                if (existUser) {
+                    this.showMessage('Username sudah digunakan.', 'error');
+                    return;
+                }
+                const { data: existEmail } = await supa.from('users').select('id').eq('email', userData.email).maybeSingle();
+                if (existEmail) {
+                    this.showMessage('Email sudah terdaftar.', 'error');
+                    return;
+                }
 
-        // Check if email already exists
-        const existingEmails = Object.values(registeredUsers).map(user => user.email);
-        if (existingEmails.includes(userData.email)) {
-            this.showMessage('Email already registered. Please use a different email.', 'error');
-            return;
-        }
+                // Hash password dengan bcryptjs
+                const bcryptLib = window.bcrypt || (window.dcodeIO && window.dcodeIO.bcrypt);
+                if (!bcryptLib) {
+                    this.showMessage('Hashing library tidak tersedia.', 'error');
+                    return;
+                }
+                const salt = bcryptLib.genSaltSync(10);
+                const passwordHash = bcryptLib.hashSync(userData.password, salt);
 
-        // Register user
-        registeredUsers[userData.username] = {
-            email: userData.email,
-            password: userData.password,
-            fullName: userData.fullName,
-            phone: userData.phone,
-            isAdmin: false,
-            registeredAt: userData.registeredAt
-        };
+                // Insert ke tabel users
+                const payload = {
+                    username: userData.username,
+                    email: userData.email,
+                    password_hash: passwordHash,
+                    role: 'user',
+                    created_at: new Date().toISOString()
+                };
+                const { error: insertErr } = await supa.from('users').insert([payload]);
+                if (insertErr) {
+                    // Unique violation (index on lower(username)/lower(email)) → 409/23505
+                    const msg = (insertErr.code === '23505' || insertErr.details?.includes('already exists'))
+                        ? 'Username atau email sudah terdaftar.'
+                        : 'Pendaftaran gagal. Coba lagi.';
+                    this.showMessage(msg, 'error');
+                    return;
+                }
 
-        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
-
-        this.showMessage('Account created successfully! You can now login.', 'success');
-        
-        // Close modal
-        document.querySelector('.registration-modal').remove();
+                this.showMessage('Akun berhasil dibuat! Silakan login.', 'success');
+                const modal = document.querySelector('.registration-modal');
+                if (modal) modal.remove();
+            } catch (err) {
+                console.error('[register modal] error', err);
+                this.showMessage('Pendaftaran gagal. Coba lagi.', 'error');
+            }
+        })();
     }
 
     showForgotPassword() {

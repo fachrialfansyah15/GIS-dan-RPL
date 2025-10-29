@@ -394,7 +394,17 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         marker.bindTooltip(tooltipHtml, { direction: 'top', offset: [0, -10], sticky: true, opacity: 0.95, className: 'leaflet-tooltip-own' });
 
         // Bind popup dengan ukuran yang sesuai (klik untuk membuka)
-        marker.bindPopup(popup, { maxWidth: 300, minWidth: 220 });
+        // Ensure popup stays within the visible map area and does not cross the header
+        marker.bindPopup(popup, {
+          maxWidth: 320,
+          minWidth: 240,
+          keepInView: true,
+          autoPan: true,
+          // Add top padding so popup won't be pushed under fixed header/overlays
+          autoPanPaddingTopLeft: [12, 90],   // left, top
+          autoPanPaddingBottomRight: [12, 12],
+          offset: [0, -12]
+        });
 
         // Tooltip akan sticky saat hover; tidak perlu open/close manual
 
@@ -584,27 +594,35 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         (position) => {
           const userLat = position.coords.latitude;
           const userLng = position.coords.longitude;
+          const accuracy = position.coords.accuracy || 0;
           const userLatLng = L.latLng(userLat, userLng);
           
           console.log(`[map.js] User location found: ${userLat}, ${userLng}`);
           
-          // Cek apakah lokasi user dalam bounds Palu
-          if (bounds.contains(userLatLng)) {
-            // Lokasi dalam area Palu, zoom ke lokasi user
-            map.setView([userLat, userLng], 14);
-          } else {
-            console.log('[map.js] User location outside Palu bounds, staying at default view');
-            // Lokasi di luar Palu, tetap di view default
+          // Jika akurasi terlalu rendah (>150m), gunakan pusat Palu sebagai fallback
+          if (accuracy > 150) {
+            console.warn('[map.js] Low geolocation accuracy:', accuracy, '→ using city center fallback');
+            showToast('Akurasi lokasi rendah. Menampilkan pusat kota Palu.', 'info');
+            map.setView([-0.900, 119.870], 13);
+            return;
+          }
+
+          // Selalu pusatkan ke lokasi user; jika di luar bounds Palu tampilkan informasi
+          const inside = bounds.contains(userLatLng);
+          map.setView([userLat, userLng], inside ? 14 : 13);
+          if (!inside) {
+            showToast('Lokasi Anda berada di luar area Palu – peta tetap dipusatkan ke posisi Anda.', 'info');
           }
         },
         (error) => {
-          console.warn('[map.js] Geolocation failed:', error.message);
+          console.warn('[map.js] Geolocation failed:', error.message, error);
+          showToast('Tidak bisa mengambil lokasi perangkat. Pastikan izin lokasi diaktifkan.', 'error');
           // Tetap di view default Palu
         },
         {
-          enableHighAccuracy: false,
-          timeout: 5000,
-          maximumAge: 60000
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
         }
       );
     }

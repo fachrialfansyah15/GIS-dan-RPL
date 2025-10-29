@@ -62,6 +62,8 @@
 
   <!-- Supabase client and config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- BcryptJS for hashing password in the browser -->
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script>
     window.SUPABASE_URL = 'https://cxcxatowzymfpasesrvp.supabase.co';
     window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4Y3hhdG93enltZnBhc2VzcnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMTY0MDIsImV4cCI6MjA3NTU5MjQwMn0.klPbBM_u-UvlG5DTMmZxRIXuczpqqLfupJUZW0gMRa0';
@@ -105,6 +107,15 @@
         msg.style.display = 'none';
 
         try {
+          // 0) Hash password in browser (bcryptjs)
+          const bcryptLib = window.bcrypt || (window.dcodeIO && window.dcodeIO.bcrypt);
+          if (!bcryptLib) {
+            showMsg('Bcrypt tidak tersedia. Pastikan jaringan Anda tersambung.', 'error');
+            return;
+          }
+          const salt = bcryptLib.genSaltSync(10);
+          const passwordHash = bcryptLib.hashSync(password, salt);
+
           // Cek email/username sudah terdaftar
           const { data: existingByEmail, error: e1 } = await supabase
             .from('users')
@@ -128,11 +139,11 @@
             return;
           }
 
-          // Insert sesuai kolom tabel users: username, email, password, role, created_at
+          // Insert dengan password_hash (tanpa menyimpan plaintext)
           const payload = {
             username,
             email,
-            password, // catatan: plaintext sesuai struktur saat ini
+            password_hash: passwordHash,
             role: 'user',
             created_at: new Date().toISOString()
           };

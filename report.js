@@ -1,6 +1,9 @@
 // Gunakan Supabase config dari window (sudah di-set di HTML)
 const supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-const BUCKET_NAME = "foto_jalan";
+// Try multiple bucket ids to be resilient to dash/underscore differences
+const BUCKET_CANDIDATES = Array.isArray(window.SUPABASE_BUCKETS) && window.SUPABASE_BUCKETS.length
+  ? window.SUPABASE_BUCKETS
+  : ["foto_jalan", "foto-jalan"]; // defaults
 
 console.log("[report.js] Supabase client initialized from window config"); 
 
@@ -260,22 +263,32 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Upload foto ke Supabase Storage
+  // Upload foto ke Supabase Storage (coba beberapa bucket candidates)
   let foto_jalan_url = null;
   const file = formData.get("roadPhoto");
   if (file && file.name) {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file);
 
-    if (uploadError) {
-      console.error(uploadError);
+    let lastErr = null;
+    for (const bucketId of BUCKET_CANDIDATES) {
+      const { error: upErr } = await supabase.storage
+        .from(bucketId)
+        .upload(fileName, file, { contentType: file.type || undefined });
+      if (!upErr) {
+        const { data } = supabase.storage.from(bucketId).getPublicUrl(fileName);
+        foto_jalan_url = data.publicUrl;
+        break;
+      } else {
+        lastErr = upErr;
+      }
+    }
+
+    if (!foto_jalan_url) {
+      console.error("[report] upload error", lastErr);
       alert("Gagal mengunggah foto jalan.");
       return;
     }
-
-    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName);
-    foto_jalan_url = data.publicUrl;
   }
 
   // Ambil user_id dari sesi auth
