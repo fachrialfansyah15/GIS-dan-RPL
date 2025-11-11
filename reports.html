@@ -101,57 +101,134 @@
         </nav>
 
         <!-- Main Content -->
-        <main class="main-content reports-layout">
-            <!-- Left Column: Submit Form -->
-            <aside class="submit-panel">
-                <div class="panel-header">
-                    <h3><i class="fas fa-plus-circle"></i> Lapor Kerusakan Baru</h3>
-                    <p>Bantu kami menjaga jalan yang lebih baik di Kota Palu dengan melaporkan kerusakan yang Anda temui.</p>
-                </div>
-                <div class="submit-form-container">
-                    <a href="report.html" class="btn-submit-report">
-                        <i class="fas fa-plus"></i>
-                        <span>Submit First Report</span>
-                    </a>
-                    <div class="submit-info">
-                        <div class="info-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>Pilih lokasi di peta</span>
+        <main class="main-content" style="padding:0;margin:0;width:100%;box-sizing:border-box;">
+            <style>
+                .header { 
+                    position: fixed !important; 
+                    top: 0 !important; 
+                    left: 0 !important; 
+                    right: 0 !important; 
+                    width: 100vw !important; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                    z-index: 10000 !important; 
+                    box-shadow: 0 2px 15px rgba(120,120,150,0.08);
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 0 20px !important;
+                    height: 60px !important;
+                    visibility: visible !important;
+                    color: #fff !important;
+                }
+                .header-left {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                }
+                .header h1, .header span, .header .logo span {
+                    color: #fff !important;
+                }
+                .header .btn-icon {
+                    color: #fff !important;
+                    background: rgba(255,255,255,0.2) !important;
+                }
+                .header-center {
+                    text-align: center !important;
+                    flex: 1 !important;
+                }
+                .header-center h1 {
+                    text-align: center !important;
+                    margin: 0 !important;
+                    font-size: 20px !important;
+                    font-weight: 500 !important;
+                }
+                .header-right {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 15px !important;
+                }
+                .header .user-controls {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                }
+                .header .user-profile {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                }
+                .header .user-profile span#userName {
+                    color: #fff !important;
+                    font-weight: 500 !important;
+                }
+                .header .user-profile .dropdown-btn {
+                    color: #fff !important;
+                    background: none !important;
+                    border: none !important;
+                }
+                .header .notification-badge {
+                    background: #ff4444 !important;
+                    color: #fff !important;
+                }
+                .navigation {
+                    position: fixed !important;
+                    top: 60px !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    z-index: 9999 !important;
+                    background: #fff !important;
+                }
+                .app-container { 
+                    padding-top: 140px !important; 
+                    margin: 0 !important; 
+                }
+                @media (max-width:600px) {
+                    .app-container { padding-top: 120px !important; }
+                    .navigation { top: 50px !important; }
+                }
+            </style>
+            <div class="reports-row">
+                <div class="reports-col">
+                    <div class="reports-title">Laporan Masuk (Belum di validasi admin)</div>
+                    <div class="reports-list-box">
+                        <div class="filters-bar" style="justify-content:space-between;align-items:center;">
+                            <a class="btn-primary" id="buatLaporanBaruBtn" href="report.html" style="display:inline-flex;align-items:center;gap:8px;background:#667eea;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:fit-content;margin:0;font-weight:500;transition:all 0.2s ease;">
+                                <i class="fas fa-plus"></i> Buat Laporan Baru
+                            </a>
+                            <div style="display:flex;gap:12px;align-items:center;">
+                            <select id="statusBaruFilter">
+                                <option value="all">Semua Status</option>
+                                <option value="reported">Dilaporkan</option>
+                                <option value="approved">Disetujui</option>
+                                <option value="ditolak">Ditolak</option>
+                            </select>
+                            <select id="jenisBaruFilter">
+                                <option value="all">Jenis Kerusakan</option>
+                            </select>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <i class="fas fa-camera"></i>
-                            <span>Upload foto kerusakan</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-edit"></i>
-                            <span>Isi detail laporan</span>
-                        </div>
+                        <div id="laporanBaruList"></div>
                     </div>
                 </div>
-            </aside>
-
-            <!-- Right Column: Reports List -->
-            <div class="reports-container">
-                <div class="reports-header">
-                    <h2>Laporan Kerusakan Jalan</h2>
-                    <div class="reports-filters">
-                        <select id="statusFilter">
-                            <option value="all">Semua Status</option>
-                            <option value="reported">Dilaporkan</option>
-                            <option value="in_progress">Sedang Diproses</option>
-                            <option value="completed">Selesai</option>
-                        </select>
-                        <select id="priorityFilter">
-                            <option value="all">Jenis Kerusakan</option>
-                            <option value="high">Tinggi</option>
-                            <option value="medium">Sedang</option>
-                            <option value="low">Rendah</option>
-                        </select>
+                <div class="reports-col">
+                    <div class="reports-title">Laporan yang sudah di validasi admin</div>
+                    <div class="reports-list-box">
+                        <div class="filters-bar">
+                            <select id="statusFilter">
+                                <option value="all">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="pending">Menunggu</option>
+                                <option value="closed">Selesai</option>
+                            </select>
+                            <select id="priorityFilter">
+                                <option value="all">Jenis Kerusakan</option>
+                                <option value="high">Tinggi</option>
+                                <option value="medium">Sedang</option>
+                                <option value="low">Ringan</option>
+                            </select>
+                        </div>
+                        <div id="laporanValidList"></div>
                     </div>
-                </div>
-
-                <div class="reports-list" id="reportsList">
-                    <!-- Reports will be loaded here -->
                 </div>
             </div>
         </main>

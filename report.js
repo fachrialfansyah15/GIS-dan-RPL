@@ -188,7 +188,9 @@ function handleGeolocate() {
     (error) => {
       console.error("[report.js] Geolocation error:", error);
       alert("⚠️ Tidak dapat mengakses lokasi Anda. Pastikan Anda mengizinkan akses lokasi di browser.");
-    }
+    },
+    // DITEKAN: gunakan mode akurasi tinggi dan timeout ekstra
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
   );
 }
 
@@ -241,7 +243,6 @@ form.addEventListener("submit", async (e) => {
   const nama_jalan = formData.get("streetName");
   const jenis_kerusakan = formData.get("damageSeverity");
   const koordinat = formData.get("coordinates");
-  const deskripsi = formData.get("description");
   const reporter = formData.get("reporterName");
   const tanggal_survey = new Date().toLocaleDateString("id-ID");
 
@@ -271,55 +272,167 @@ form.addEventListener("submit", async (e) => {
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
     let lastErr = null;
+    let lastBucket = null;
     for (const bucketId of BUCKET_CANDIDATES) {
-      const { error: upErr } = await supabase.storage
+      console.log(`[report.js] Attempting upload to bucket: ${bucketId}`);
+      const { data: uploadData, error: upErr } = await supabase.storage
         .from(bucketId)
-        .upload(fileName, file, { contentType: file.type || undefined });
-      if (!upErr) {
-        const { data } = supabase.storage.from(bucketId).getPublicUrl(fileName);
-        foto_jalan_url = data.publicUrl;
-        break;
+        .upload(fileName, file, { 
+          contentType: file.type || 'image/jpeg',
+          upsert: false 
+        });
+      
+      if (!upErr && uploadData) {
+        console.log(`[report.js] Upload successful to bucket: ${bucketId}`);
+        const { data: urlData } = supabase.storage.from(bucketId).getPublicUrl(fileName);
+        foto_jalan_url = urlData?.publicUrl || null;
+        if (foto_jalan_url) {
+          console.log(`[report.js] Public URL generated: ${foto_jalan_url}`);
+          break;
+        }
       } else {
+        console.error(`[report.js] Upload failed to bucket ${bucketId}:`, upErr);
         lastErr = upErr;
+        lastBucket = bucketId;
       }
     }
 
     if (!foto_jalan_url) {
-      console.error("[report] upload error", lastErr);
-      alert("Gagal mengunggah foto jalan.");
+      console.error("[report.js] All upload attempts failed. Last error:", lastErr);
+      console.error("[report.js] Last attempted bucket:", lastBucket);
+      alert(`Gagal mengunggah foto jalan. Error: ${lastErr?.message || 'Unknown error'}\n\nPastikan:\n1. Bucket 'foto_jalan' atau 'foto-jalan' ada di Supabase Storage\n2. RLS policy mengizinkan upload untuk role 'anon' atau 'authenticated'`);
       return;
     }
   }
 
   // Ambil user_id dari sesi auth
+  // Note: user_id harus UUID (string), bukan integer
   let user_id = null;
-  try { user_id = window.auth?.getUserId ? window.auth.getUserId() : null; } catch (_) {}
+  try { 
+    user_id = window.auth?.getUserId ? window.auth.getUserId() : null;
+    // Keep as string (UUID format) - do NOT convert to integer
+    // If it's a number, it means the Edge Function returned integer ID instead of UUID
+    // In that case, we need to fetch the actual UUID from users table
+    if (user_id && typeof user_id === 'number') {
+      console.warn("[report.js] user_id is a number, but database expects UUID. Fetching UUID from users table...");
+      // Get current username to find the user
+      const currentUser = window.auth?.currentUser || null;
+      if (currentUser) {
+        // Try to get UUID from users table using username
+        const { data: userData, error: userErr } = await supabase
+          .from('users')
+          .select('id')
+          .eq('username', currentUser)
+          .maybeSingle();
+        
+        if (!userErr && userData && userData.id) {
+          user_id = userData.id; // Use the UUID from database
+          console.log("[report.js] Found UUID from users table by username:", user_id);
+        } else {
+          // Fallback: try with integer ID (in case users.id is also integer)
+          const { data: userData2, error: userErr2 } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', user_id.toString())
+            .maybeSingle();
+          
+          if (!userErr2 && userData2 && userData2.id) {
+            user_id = userData2.id;
+            console.log("[report.js] Found UUID from users table by ID:", user_id);
+          } else {
+            console.error("[report.js] Could not find user with ID:", user_id, "or username:", currentUser);
+            user_id = null;
+          }
+        }
+      } else {
+        console.error("[report.js] No currentUser available to fetch UUID");
+        user_id = null;
+      }
+    } else if (user_id && typeof user_id === 'string') {
+      // Validate UUID format (basic check)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(user_id)) {
+        console.warn("[report.js] user_id is not a valid UUID format:", user_id);
+        // Try to fetch UUID from users table using username or other identifier
+        const currentUser = window.auth?.currentUser || null;
+        if (currentUser) {
+          const { data: userData, error: userErr } = await supabase
+            .from('users')
+            .select('id')
+            .eq('username', currentUser)
+            .maybeSingle();
+          
+          if (!userErr && userData && userData.id) {
+            user_id = userData.id;
+            console.log("[report.js] Found UUID from users table by username:", user_id);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[report.js] Error getting user_id:", err);
+    user_id = null;
+  }
+  
   if (!user_id) {
-    alert("Anda harus login untuk mengirim laporan.");
+    console.error("[report.js] No valid user_id found. User must be logged in.");
+    alert("Anda harus login untuk mengirim laporan. Silakan logout dan login kembali.");
     return;
   }
+  
+  console.log("[report.js] Using user_id:", user_id, "Type:", typeof user_id);
 
   // Insert ke tabel laporan_masuk dengan user_id dan status awal
-  const { error: insertError } = await supabase.from("laporan_masuk").insert([
-    {
-      tanggal_survey,
-      nama_jalan,
-      jenis_kerusakan,
-      foto_jalan: foto_jalan_url,
-      Latitude,
-      Longitude,
-      user_id,
-      status: 'reported'
-    },
-  ]);
+  const insertData = {
+    tanggal_survey,
+    nama_jalan,
+    jenis_kerusakan,
+    foto_jalan: foto_jalan_url,
+    Latitude,
+    Longitude,
+    user_id,
+    status: 'reported'
+  };
+  
+  console.log("[report.js] Inserting data:", insertData);
+  
+  const { data: insertResult, error: insertError } = await supabase
+    .from("laporan_masuk")
+    .insert([insertData])
+    .select();
 
   if (insertError) {
-    console.error(insertError);
-    alert("Gagal mengirim laporan!");
+    console.error("[report.js] Insert error:", insertError);
+    console.error("[report.js] Error details:", {
+      message: insertError.message,
+      details: insertError.details,
+      hint: insertError.hint,
+      code: insertError.code
+    });
+    
+    let errorMsg = "Gagal mengirim laporan!";
+    if (insertError.code === '23505') {
+      errorMsg = "Laporan dengan data yang sama sudah ada. Silakan coba lagi dengan lokasi yang berbeda.";
+    } else if (insertError.code === '42501') {
+      errorMsg = "Anda tidak memiliki izin untuk mengirim laporan. Pastikan Anda sudah login.";
+    } else if (insertError.code === '23503') {
+      // Foreign key constraint violation
+      errorMsg = `User ID tidak valid. Silakan logout dan login kembali.\n\nDetail: ${insertError.message || 'Foreign key constraint violation'}`;
+      console.error("[report.js] Foreign key violation - user_id mungkin tidak ada di tabel users:", user_id);
+    } else if (insertError.message) {
+      errorMsg = `Gagal mengirim laporan: ${insertError.message}`;
+    }
+    
+    alert(errorMsg);
   } else {
+    console.log("[report.js] Insert successful:", insertResult);
     alert("✅ Laporan berhasil dikirim!");
     form.reset();
     filePreview.innerHTML = "";
     if (marker) marker.remove();
+    // Reset koordinat fields
+    document.getElementById("coordinates").value = "";
+    document.getElementById("latitude").value = "";
+    document.getElementById("longitude").value = "";
   }
 });

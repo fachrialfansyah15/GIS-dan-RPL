@@ -8,8 +8,39 @@ class ReportsPage {
     init() {
         this.checkAuth();
         this.setupEventListeners();
-        this.loadReports();
+        this.renderLists();
         this.setupMobileNav();
+        // Setup filter event listeners setelah DOM ready
+        setTimeout(() => {
+            this.setupFilterListeners();
+        }, 100);
+    }
+
+    setupFilterListeners() {
+        const statusFilter = document.getElementById('statusFilter');
+        const priorityFilter = document.getElementById('priorityFilter');
+        const statusBaruFilter = document.getElementById('statusBaruFilter');
+        const jenisBaruFilter = document.getElementById('jenisBaruFilter');
+        
+        // Box kanan (Laporan Divalidasi)
+        if(statusFilter) {
+            statusFilter.removeEventListener('change', this.renderValidList);
+            statusFilter.addEventListener('change', ()=>{ this.renderValidList(); });
+        }
+        if(priorityFilter) {
+            priorityFilter.removeEventListener('change', this.renderValidList);
+            priorityFilter.addEventListener('change', ()=>{ this.renderValidList(); });
+        }
+        
+        // Box kiri (Laporan Masuk)
+        if(statusBaruFilter) {
+            statusBaruFilter.removeEventListener('change', this.renderBaruList);
+            statusBaruFilter.addEventListener('change', ()=>{ this.renderBaruList(); });
+        }
+        if(jenisBaruFilter) {
+            jenisBaruFilter.removeEventListener('change', this.renderBaruList);
+            jenisBaruFilter.addEventListener('change', ()=>{ this.renderBaruList(); });
+        }
     }
 
     checkAuth() {
@@ -41,132 +72,203 @@ class ReportsPage {
             });
         }
 
-        // Filter functionality
-        const statusFilter = document.getElementById('statusFilter');
-        const priorityFilter = document.getElementById('priorityFilter');
+        // Filter functionality - sudah dihandle di init(), tidak perlu duplikat di sini
 
-        if (statusFilter) {
-            statusFilter.addEventListener('change', () => {
-                this.filterReports();
-            });
-        }
-
-        if (priorityFilter) {
-            priorityFilter.addEventListener('change', () => {
-                this.filterReports();
+        const btn = document.getElementById('buatLaporanBaruBtn');
+        if(btn){
+            btn.addEventListener('click',()=>{
+                // Scroll ke form jika form ditampilkan inline (atau munculkan modal jika ada)
+                const ele = document.getElementById('damageReportForm');
+                if(ele) ele.scrollIntoView({behavior:'smooth',block:'start'});
+                // Atau: document.getElementById('formLaporanContainer').style.display='block';
             });
         }
     }
 
-    async loadReports() {
-        const reportsList = document.getElementById('reportsList');
-        if (!reportsList) return;
+    // Ganti: render dua list utama
+    async renderLists() {
+        await Promise.all([
+            this.renderBaruList(), this.renderValidList()
+        ]);
+        // Setup ulang filter listeners setelah dropdown diisi
+        this.setupFilterListeners();
+    }
 
-        // Supabase client
+    async renderBaruList() {
+        const box = document.getElementById('laporanBaruList');
+        if (!box) return;
         const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-        if (!supabase) {
-            reportsList.innerHTML = '<div class="no-reports">Supabase config missing.</div>';
-            return;
-        }
-
-        const isAdmin = !!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin());
+        if (!supabase) { box.innerHTML='<div class="no-reports">Supabase config missing.</div>'; return; }
+        const isAdmin = window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin();
         const userId = window.auth?.getUserId ? window.auth.getUserId() : null;
-
         let rows = [];
         try {
             if (isAdmin) {
                 const { data, error } = await supabase
-                    .from('jalan_rusak')
-                    .select('*');
-                if (error) throw error; rows = data || [];
+                    .from('laporan_masuk')
+                    .select('*')
+                    .order('created_at',{ascending:false});
+                if (error) throw error; rows=data||[];
             } else {
-                if (!userId) {
-                    reportsList.innerHTML = '<div class="no-reports">Please login to view your reports.</div>';
-                    return;
-                }
+                if (!userId) { box.innerHTML='<div class="no-reports">Login untuk melihat laporan Anda.</div>'; return; }
                 const { data, error } = await supabase
                     .from('laporan_masuk')
                     .select('*')
-                    .eq('user_id', userId);
-                if (error) throw error; rows = data || [];
+                    .eq('user_id',userId)
+                    .order('created_at',{ascending:false});
+                if (error) throw error; rows=data||[];
             }
-        } catch (e) {
-            reportsList.innerHTML = `<div class="no-reports">Failed to load reports: ${e.message}</div>`;
-            return;
+        } catch(e){ box.innerHTML = `<div class="no-reports">${e.message}</div>`; return; }
+        // Generate filter opsi jenis kerusakan untuk laporanBaru
+        const jenisSet = new Set();
+        rows.forEach(r=>{if (r.jenis_kerusakan) jenisSet.add(r.jenis_kerusakan);});
+        const jenisList = Array.from(jenisSet);
+        // Fungsi mapping jenis kerusakan ke Bahasa Indonesia
+        const mapJenisKerusakan = (jenis) => {
+            const j = String(jenis||'').toLowerCase();
+            if(j.includes('minor') || j.includes('ringan')) return 'Kerusakan Ringan';
+            if(j.includes('medium') || j.includes('sedang')) return 'Kerusakan Sedang';
+            if(j.includes('severe') || j.includes('berat')) return 'Kerusakan Berat';
+            return jenis; // return as-is jika tidak match
+        };
+        let jenisDropdown = document.getElementById('jenisBaruFilter');
+        if(jenisDropdown){
+            // Clear old options (kecuali pertama)
+            jenisDropdown.innerHTML = '<option value="all">Jenis Kerusakan</option>';
+            jenisList.forEach(jk=>{
+                const opt = document.createElement('option');
+                opt.value = jk; 
+                opt.innerText = mapJenisKerusakan(jk);
+                jenisDropdown.appendChild(opt);
+            });
         }
-
-        // Sort client-side: prefer created_at, fallback tanggal_survey, then id
-        rows.sort((a, b) => {
-            const da = a.created_at || a.tanggal_survey || '';
-            const db = b.created_at || b.tanggal_survey || '';
-            const ta = da ? new Date(da).getTime() : 0;
-            const tb = db ? new Date(db).getTime() : 0;
-            if (tb !== ta) return tb - ta;
-            const ia = typeof a.id === 'number' ? a.id : parseInt(a.id || '0', 10) || 0;
-            const ib = typeof b.id === 'number' ? b.id : parseInt(b.id || '0', 10) || 0;
-            return ib - ia;
+        // FILTER: status dan jenis kerusakan
+        const statusBaru = (document.getElementById('statusBaruFilter')||{}).value||'all';
+        const jenisBaru = (jenisDropdown||{}).value||'all';
+        rows = rows.filter(r=>{
+            let pass = true;
+            // Filter status
+            if(statusBaru!=='all') {
+                const rStatus = (r.status||'').toLowerCase().trim();
+                pass = pass && (rStatus===statusBaru.toLowerCase().trim());
+            }
+            // Filter jenis kerusakan (match dengan value asli dari database)
+            if(jenisBaru!=='all') {
+                pass = pass && (String(r.jenis_kerusakan||'').trim()===String(jenisBaru).trim());
+            }
+            return pass;
         });
-
         if (!rows.length) {
-            reportsList.innerHTML = `
-                <div class="no-reports">
-                    <i class="fas fa-clipboard-list"></i>
-                    <h3>No Reports Found</h3>
-                    <p>${isAdmin ? 'No validated reports yet.' : 'You have not submitted any reports.'}</p>
-                </div>
-            `;
+            box.innerHTML = `<div class="no-reports">${isAdmin?'Tidak ada laporan baru.':'Belum ada laporan Anda.'}</div>`;
             return;
         }
+        // Fungsi mapping status ke Bahasa Indonesia
+        const mapStatus = (status) => {
+            const s = String(status||'').toLowerCase().trim();
+            if(s.includes('reported') || s==='dilaporkan') return 'Dilaporkan';
+            if(s.includes('approved') || s==='disetujui') return 'Disetujui';
+            if(s.includes('ditolak') || s==='rejected') return 'Ditolak';
+            if(s.includes('aktif') || s==='active') return 'Aktif';
+            if(s.includes('pending')) return 'Menunggu';
+            if(s.includes('closed') || s==='selesai') return 'Selesai';
+            return status; // return as-is jika tidak match
+        };
+        const html = rows.map(r=>{
+            const s = (r.status||'').toLowerCase();
+            const statusText = mapStatus(r.status);
+            let actionBtns = '';
+            if(isAdmin){
+                actionBtns = `<button class="btn-primary approve-report" data-id="${r.id}"><i class="fas fa-check"></i>Setujui</button> <button class="btn-secondary reject-report" data-id="${r.id}"><i class="fas fa-times"></i>Tolak</button>`;
+            }
+            // Mapping jenis kerusakan ke Bahasa Indonesia untuk display
+            const jenisDisplay = mapJenisKerusakan(r.jenis_kerusakan);
+            return `<div class="report-card" data-status="${s}">
+                <div class="report-header"><div class="report-id">${r.id}</div><div class="report-status ${s}">${statusText}</div></div>
+                <div class="report-content">
+                <h3>${jenisDisplay}</h3>
+                <p class="report-location"><i class="fas fa-map-marker-alt"></i>${r.nama_jalan||''}</p>
+                <div class="report-meta"><span class="report-date"><i class="fas fa-clock"></i>${r.created_at?new Date(r.created_at).toLocaleString():''}</span></div>
+                <div class="report-description">${r.description||''}</div>
+                </div>
+                <div class="report-actions">${actionBtns}</div></div>`;
+        }).join('');
+        box.innerHTML = html;
+        if(isAdmin){
+            box.querySelectorAll('.approve-report').forEach(btn=>btn.addEventListener('click',async()=>{await this.approveLaporan(btn.getAttribute('data-id'));this.renderLists();}));
+            box.querySelectorAll('.reject-report').forEach(btn=>btn.addEventListener('click',async()=>{await this.rejectLaporan(btn.getAttribute('data-id'));this.renderLists();}));
+        }
+    }
 
+    async renderValidList() {
+        const box = document.getElementById('laporanValidList');
+        if (!box) return;
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) { box.innerHTML='<div class="no-reports">Supabase config missing.</div>'; return; }
+        let rows = [];
+        try {
+            const { data, error } = await supabase.from('jalan_rusak').select('*').order('tanggal_survey',{ascending:false});
+            if (error) throw error; rows=data||[];
+        }catch(e){ box.innerHTML=`<div class="no-reports">${e.message}</div>`; return; }
+        // FILTER: status dan priority (jenis kerusakan via priority filter)
+        const statusVal = (document.getElementById('statusFilter')||{}).value||'all';
+        const priorityVal = (document.getElementById('priorityFilter')||{}).value||'all';
         function mapPriority(jenis) {
-            const s = String(jenis || '').toLowerCase();
-            if (s.includes('berat')) return 'high';
-            if (s.includes('sedang')) return 'medium';
-            if (s.includes('ringan')) return 'low';
+            const s = String(jenis||'').toLowerCase();
+            if(s.includes('berat') || s.includes('severe')) return 'high';
+            if(s.includes('sedang') || s.includes('medium')) return 'medium';
+            if(s.includes('ringan') || s.includes('minor')) return 'low';
             return 'low';
         }
-
-        const html = rows.map(r => {
-            const status = (r.status || (isAdmin ? 'reported' : 'reported')).toString().toLowerCase();
-            const priority = mapPriority(r.jenis_kerusakan);
-            const dateRaw = r.created_at || r.tanggal_survey || '';
-            const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString() : '';
-            const dmg = r.jenis_kerusakan || '-';
-            const loc = r.nama_jalan || `${r.Latitude || ''}, ${r.Longitude || ''}`;
-            return `
-            <div class="report-card" data-status="${status}" data-priority="${priority}">
-                <div class="report-header">
-                    <div class="report-id">${r.id}</div>
-                    <div class="report-status ${status}">${status.replace('_',' ')}</div>
-                </div>
+        rows = rows.filter(r=>{
+            let pass = true;
+            // Filter status
+            if(statusVal!=='all') {
+                const rStatus = (r.status||'').toLowerCase().trim();
+                pass = pass && (rStatus===statusVal.toLowerCase().trim());
+            }
+            // Filter priority (berdasarkan jenis kerusakan)
+            if(priorityVal!=='all') {
+                const mappedPriority = mapPriority(r.jenis_kerusakan);
+                pass = pass && (mappedPriority===priorityVal);
+            }
+            return pass;
+        });
+        if(!rows.length){ box.innerHTML='<div class="no-reports">Belum ada laporan tervalidasi.</div>'; return; }
+        // Fungsi mapping jenis kerusakan ke Bahasa Indonesia
+        const mapJenisKerusakan = (jenis) => {
+            const j = String(jenis||'').toLowerCase();
+            if(j.includes('minor') || j.includes('ringan')) return 'Kerusakan Ringan';
+            if(j.includes('medium') || j.includes('sedang')) return 'Kerusakan Sedang';
+            if(j.includes('severe') || j.includes('berat')) return 'Kerusakan Berat';
+            return jenis; // return as-is jika tidak match
+        };
+        // Fungsi mapping status ke Bahasa Indonesia
+        const mapStatus = (status) => {
+            const s = String(status||'').toLowerCase().trim();
+            if(s.includes('reported') || s==='dilaporkan') return 'Dilaporkan';
+            if(s.includes('approved') || s==='disetujui') return 'Disetujui';
+            if(s.includes('ditolak') || s==='rejected') return 'Ditolak';
+            if(s.includes('aktif') || s==='active') return 'Aktif';
+            if(s.includes('pending')) return 'Menunggu';
+            if(s.includes('closed') || s==='selesai') return 'Selesai';
+            return status; // return as-is jika tidak match
+        };
+        const html = rows.map(r=>{
+            const s = (r.status||'').toLowerCase();
+            const statusText = mapStatus(r.status);
+            // Mapping jenis kerusakan ke Bahasa Indonesia untuk display
+            const jenisDisplay = mapJenisKerusakan(r.jenis_kerusakan);
+            return `<div class="report-card" data-status="${s}">
+                <div class="report-header"><div class="report-id">${r.id}</div><div class="report-status ${s}">${statusText}</div></div>
                 <div class="report-content">
-                    <h3>${dmg}</h3>
-                    <p class="report-location"><i class="fas fa-map-marker-alt"></i>${loc}</p>
-                    <div class="report-meta">
-                        <span class="report-priority ${priority}"><i class="fas fa-flag"></i>${priority} Priority</span>
-                        <span class="report-date"><i class="fas fa-clock"></i>${dateStr}</span>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn-secondary" data-view-id="${r.id}"><i class="fas fa-eye"></i>View Details</button>
-                    ${isAdmin ? `<button class="btn-primary" data-delete-id="${r.id}"><i class="fas fa-trash"></i>Hapus</button>` : ''}
+                <h3>${jenisDisplay}</h3>
+                <p class="report-location"><i class="fas fa-map-marker-alt"></i>${r.nama_jalan||''}</p>
+                <div class="report-meta"><span class="report-date"><i class="fas fa-clock"></i>${r.tanggal_survey?new Date(r.tanggal_survey).toLocaleString():''}</span></div>
+                <div class="report-description">${r.description||''}</div>
                 </div>
             </div>`;
         }).join('');
-
-        reportsList.innerHTML = html;
-
-        // Wire actions
-        reportsList.querySelectorAll('[data-view-id]').forEach(btn => btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-view-id');
-            this.viewReportSupabase(id, isAdmin);
-        }));
-        if (isAdmin) {
-            reportsList.querySelectorAll('[data-delete-id]').forEach(btn => btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-delete-id');
-                this.deleteReportSupabase(id);
-            }));
-        }
+        box.innerHTML = html;
     }
 
     filterReports() {
@@ -206,6 +308,50 @@ class ReportsPage {
         if (!ok) return;
         const { error } = await supabase.from('jalan_rusak').update({ status: 'deleted' }).eq('id', reportId);
         if (!error) { this.loadReports(); this.showMessage('Laporan berhasil dihapus.', 'success'); }
+    }
+
+    // Approve dan reject logic
+    async approveLaporan(id) {
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) return;
+        const { data: src, error: e1 } = await supabase.from('laporan_masuk').select('*').eq('id', id).single();
+        if (e1 || !src) {
+            this.showMessage('Data tidak ditemukan', 'error');
+            return;
+        }
+        // Insert ke jalan_rusak
+        const insertData = {
+            tanggal_survey: src.tanggal_survey,
+            nama_jalan: src.nama_jalan,
+            jenis_kerusakan: src.jenis_kerusakan,
+            foto_jalan: src.foto_jalan,
+            Latitude: src.Latitude,
+            Longitude: src.Longitude,
+            status: 'pending',
+            user_id: src.user_id || null,
+            admin_id: window.auth?.getUserId ? window.auth.getUserId() : null
+        };
+        const { error: e2 } = await supabase.from('jalan_rusak').insert([insertData]);
+        if (e2) {
+            this.showMessage('Gagal approve laporan', 'error');
+            return;
+        }
+        const { error: e3 } = await supabase.from('laporan_masuk').update({status:'approved'}).eq('id', id);
+        if (e3) {
+            this.showMessage('Gagal update status laporan', 'error');
+        } else {
+            this.showMessage('Laporan disetujui dan dipindahkan.', 'success');
+        }
+    }
+    async rejectLaporan(id) {
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) return;
+        const { error } = await supabase.from('laporan_masuk').update({status:'ditolak'}).eq('id',id);
+        if (error) {
+            this.showMessage('Gagal menolak laporan','error');
+        } else {
+            this.showMessage('Laporan ditolak','success');
+        }
     }
 
     showMessage(message, type) {

@@ -570,8 +570,8 @@ class AuthSystem {
                 const { data: existEmail } = await supa.from('users').select('id').eq('email', userData.email).maybeSingle();
                 if (existEmail) {
                     this.showMessage('Email sudah terdaftar.', 'error');
-                    return;
-                }
+            return;
+        }
 
                 // Hash password dengan bcryptjs
                 const bcryptLib = window.bcrypt || (window.dcodeIO && window.dcodeIO.bcrypt);
@@ -585,7 +585,7 @@ class AuthSystem {
                 // Insert ke tabel users
                 const payload = {
                     username: userData.username,
-                    email: userData.email,
+            email: userData.email,
                     password_hash: passwordHash,
                     role: 'user',
                     created_at: new Date().toISOString()

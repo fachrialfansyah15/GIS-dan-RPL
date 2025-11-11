@@ -147,7 +147,7 @@ serve(async (request: Request) => {
     // Fallback: check admins table (plaintext password as per current schema)
     const { data: adminRow, error: adminErr } = await supabase
       .from("public.admins")
-      .select("id, username, password")
+      .select("id, username, password, password_hash")
       .ilike("username", `${lookup}%`)
       .limit(1)
       .maybeSingle();
@@ -155,7 +155,7 @@ serve(async (request: Request) => {
     let adminViaRest: any = null;
     if (!adminRow) {
       try {
-        const rest = await fetch(`${SUPABASE_URL}/rest/v1/admins?select=id,username,password&username=ilike.${encodeURIComponent(lookup + '%')}`,
+        const rest = await fetch(`${SUPABASE_URL}/rest/v1/admins?select=id,username,password,password_hash&username=ilike.${encodeURIComponent(lookup + '%')}`,
           { headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } });
         if (rest.ok) {
           const arr = await rest.json() as any[];
@@ -169,13 +169,12 @@ serve(async (request: Request) => {
 
     if (adminRow || adminViaRest) {
       const a = adminRow || adminViaRest;
-      console.log(`[auth-login] Found admin id=${a.id}, username='${a.username}'`);
+      console.log(`[auth-login] Found admin id=${a.id}, username='${a.username}', has_hash=${!!a.password_hash}`);
       let adminOk = false;
-      if (a.password) {
-        // Tolerate accidental whitespace differences for legacy plaintext admin passwords
-        const dbPass = String(a.password || '').trim();
-        const inPass = String(password || '').trim();
-        adminOk = dbPass === inPass;
+      if (a.password_hash) {
+        try { adminOk = bcrypt.compareSync(password, a.password_hash); } catch (_) { adminOk = false; }
+      } else if (a.password) {
+        adminOk = String(a.password) === password;
       }
       if (adminOk) {
         console.log('[auth-login] Admin password OK');
