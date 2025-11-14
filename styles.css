@@ -3899,3 +3899,42 @@ body { overflow-x: hidden; }
     border-radius: 10px;
   }
 }
+
+@media (max-width: 600px) {
+  #filterBox {
+    width: 90%;
+    min-width: 0;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    padding: 12px;
+    border-radius: 16px;
+    bottom: 15px;
+    gap: 12px;
+  }
+  .filter-item, .stats-item {
+    gap: 4px;
+  }
+  #filterBox select {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+  #filterBox .stats-item {
+    font-size: 13px;
+  }
+  #legendBox {
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    max-width: 60%;
+    bottom: 15px !important;
+    right: 15px !important;
+  }
+  #legendBox .legend-list {
+    gap: 7px;
+  }
+  #legendBox .legend-item {
+    gap: 5px;
+    padding: 0;
+  }
+}
