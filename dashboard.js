@@ -261,9 +261,9 @@ class Dashboard {
         }
         
         // Animate stat cards with real data
-        this.animateStatCard('.stat-card:nth-child(1) .stat-value', totalLaporanAktif);
-        this.animateStatCard('.stat-card:nth-child(2) .stat-value', totalSedangDiproses);
-        this.animateStatCard('.stat-card:nth-child(3) .stat-value', totalSelesai);
+        this.animateStatCard('.stats-section-inline .stat-card:nth-child(1) .stat-value', totalLaporanAktif);
+        this.animateStatCard('.stats-section-inline .stat-card:nth-child(2) .stat-value', totalSedangDiproses);
+        this.animateStatCard('.stats-section-inline .stat-card:nth-child(3) .stat-value', totalSelesai);
     }
 
     animateStatCard(selector, value) {

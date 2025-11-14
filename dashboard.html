@@ -90,54 +90,7 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Statistics Cards -->
-            <div class="stats-section">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">24</div>
-                        <div class="stat-label">Laporan Aktif</div>
-                        <div class="stat-change positive">+3 minggu ini</div>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-tools"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">8</div>
-                        <div class="stat-label">Sedang Diproses</div>
-                        <div class="stat-change positive">+2 minggu ini</div>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">156</div>
-                        <div class="stat-label">Selesai</div>
-                        <div class="stat-change positive">+12 minggu ini</div>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">2.3</div>
-                        <div class="stat-label">Rata-rata Respons (hari)</div>
-                        <div class="stat-change negative">+0.2 hari</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Content -->
+            <!-- Dashboard Grid 2x2 -->
             <div class="dashboard-grid">
                 <!-- Recent Reports -->
                 <div class="dashboard-card">
@@ -187,13 +140,13 @@
                 </div>
 
                 <!-- Map Preview -->
-                <div class="dashboard-card map-preview-card">
+                <div class="dashboard-card">
                     <div class="card-header">
                         <h3>Preview Peta</h3>
                     </div>
-                    <div class="card-content" style="padding-bottom: 20px;">
-                        <div id="mapPreview" style="height: 300px; width: 100%; border-radius: 8px; margin-bottom: 12px;"></div>
-                        <button id="viewFullMapBtn" class="btn-primary" style="width: 100%; padding: 10px; margin: 0;">
+                    <div class="card-content" style="padding-bottom: 20px; display: flex; flex-direction: column;">
+                        <div id="mapPreview" style="flex: 1; min-height: 0; width: 100%; border-radius: 8px; margin-bottom: 12px;"></div>
+                        <button id="viewFullMapBtn" class="btn-primary" style="width: 100%; padding: 10px; margin: 0; flex-shrink: 0;">
                             <i class="fas fa-map"></i> Lihat Peta Lengkap
                         </button>
                     </div>
@@ -225,6 +178,60 @@
                                 <div class="priority-info">
                                     <h4>Jl. Gatot Subroto</h4>
                                     <p>2 laporan aktif</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="dashboard-card stats-card">
+                    <div class="card-header">
+                        <h3>Statistik</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="stats-section-inline">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">24</div>
+                                    <div class="stat-label">Laporan Aktif</div>
+                                    <div class="stat-change positive">+3 minggu ini</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">8</div>
+                                    <div class="stat-label">Sedang Diproses</div>
+                                    <div class="stat-change positive">+2 minggu ini</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">156</div>
+                                    <div class="stat-label">Selesai</div>
+                                    <div class="stat-change positive">+12 minggu ini</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">2.3</div>
+                                    <div class="stat-label">Rata-rata Respons (hari)</div>
+                                    <div class="stat-change negative">+0.2 hari</div>
                                 </div>
                             </div>
                         </div>
