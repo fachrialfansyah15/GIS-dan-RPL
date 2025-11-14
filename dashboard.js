@@ -77,12 +77,23 @@ class Dashboard {
                     const lat = parseFloat(row.Latitude);
                     const lng = parseFloat(row.Longitude);
                     if (isNaN(lat) || isNaN(lng)) return;
+                    
+                    // Gunakan createSeverityIcon sama seperti di map.js
+                    const jenis = row.jenis_kerusakan || '';
                     const marker = L.marker([lat, lng], {
-                        icon: this.getReportIcon('pothole', 'high') // or customize by kerusakan
+                        icon: this.createSeverityIcon(jenis)
                     });
+                    
                     let content = `<div style='min-width:180px'><strong>${row.nama_jalan || '-'}</strong><br/>`;
                     content += `Jenis: ${row.jenis_kerusakan || '-'}<br/>`;
-                    if (row.foto_jalan) content += `<img src='${row.foto_jalan}' alt='foto jalan' style='width:140px;margin-top:6px;border-radius:6px'/><br/>`;
+                    if (row.foto_jalan) {
+                        // Handle foto URL (bisa full URL atau perlu prefix)
+                        let fotoUrl = row.foto_jalan;
+                        if (!fotoUrl.startsWith('http')) {
+                            fotoUrl = `https://cxcxatowzymfpasesrvp.supabase.co/storage/v1/object/public/foto_jalan/${fotoUrl}`;
+                        }
+                        content += `<img src='${fotoUrl}' alt='foto jalan' style='width:140px;margin-top:6px;border-radius:6px' onerror='this.style.display=\"none\"'/><br/>`;
+                    }
                     content += `</div>`;
                     marker.bindPopup(content);
                     this.reportLayer.addLayer(marker);
@@ -91,26 +102,34 @@ class Dashboard {
         } catch(err) { }
     }
 
-    getReportIcon(type, priority) {
-        const colors = {
-            'high': '#dc3545',
-            'medium': '#ffc107',
-            'low': '#28a745'
-        };
+    // Helper functions untuk marker (sama dengan map.js)
+    normalizeSeverity(val) {
+        if (!val) return '';
+        const s = String(val).toLowerCase();
+        if (s.includes('berat')) return 'Rusak Berat';
+        if (s.includes('sedang')) return 'Rusak Sedang';
+        if (s.includes('ringan')) return 'Rusak Ringan';
+        return val;
+    }
 
-        const icons = {
-            'pothole': 'fas fa-exclamation-triangle',
-            'crack': 'fas fa-road',
-            'flooding': 'fas fa-tint',
-            'sign': 'fas fa-sign'
-        };
+    severityColor(sev) {
+        const n = this.normalizeSeverity(sev);
+        if (n === 'Rusak Berat') return '#dc3545'; // red
+        if (n === 'Rusak Sedang') return '#ff8c00'; // orange
+        if (n === 'Rusak Ringan') return '#ffd31a'; // yellow
+        return '#3b82f6'; // fallback blue
+    }
 
-        return L.divIcon({
-            className: 'report-marker',
-            html: `<i class="${icons[type] || 'fas fa-exclamation-triangle'}" style="color: ${colors[priority]}; font-size: 20px;"></i>`,
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-        });
+    createSeverityIcon(sev) {
+        const color = this.severityColor(sev);
+        const html = `
+          <div style="width:26px;height:38px;">
+            <svg width="26" height="38" viewBox="0 0 26 38" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 0C5.82 0 0 5.82 0 13c0 8.35 9.74 19.33 11.95 21.73.56.6 1.54.6 2.1 0C16.26 32.33 26 21.35 26 13 26 5.82 20.18 0 13 0z" fill="${color}" />
+              <circle cx="13" cy="13" r="5.5" fill="#ffffff"/>
+            </svg>
+          </div>`;
+        return L.divIcon({ className: 'severity-marker', html, iconSize: [26, 38], iconAnchor: [13, 38], popupAnchor: [0, -30], tooltipAnchor: [0, -32] });
     }
 
     setupEventListeners() {
