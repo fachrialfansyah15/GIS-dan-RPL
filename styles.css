@@ -3938,3 +3938,69 @@ body { overflow-x: hidden; }
     padding: 0;
   }
 }
+
+@media (max-width:600px){
+  body, .app-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+  .header, .navigation {
+    margin-top: 0 !important;
+    top: 0 !important;
+  }
+  #filterBox {
+    position: fixed !important;
+    left: 50%!important;
+    right: auto;
+    bottom: 15px!important;
+    z-index: 99999 !important;
+    width: 90vw;
+    max-width: 98vw;
+    min-width: 0;
+    padding: 10px 7px;
+    border-radius: 13px;
+    gap: 8px;
+    background: #fff;
+    box-shadow: 0 2px 16px rgb(30 30 60/15%);
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+  }
+  .filter-item,
+  .stats-item {
+    gap: 2px;
+    font-size:12px;
+  }
+  #filterBox select {
+    font-size: 12px;
+    padding: 6px 6px;
+    border-radius:5px;
+  }
+  #filterBox .stats-item {
+    font-size: 12px;
+  }
+  #legendBox {
+    position: fixed !important;
+    z-index: 100000 !important;
+    right: 13px !important;
+    bottom: 67px !important;
+    font-size: 11px !important;
+    border-radius:8px !important;
+    padding: 6px 7px !important;
+    min-width: 0;
+    max-width: 64vw;
+    background: #fff;
+    box-shadow: 0 2px 12px rgb(30 30 60/16%);
+  }
+  #legendBox .legend-list{
+    gap: 3px;
+  }
+  #legendBox .legend-item {
+    gap:2px;
+    padding:0 0 2px 0;
+  }
+  .page-container, #mapContainer, #map{
+    height:100vh!important;
+    min-height:0!important;
+  }
+}
