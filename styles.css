@@ -4003,4 +4003,7 @@ body { overflow-x: hidden; }
     height:100vh!important;
     min-height:0!important;
   }
+  #legendBox {
+    bottom: 110px !important;
+  }
 }

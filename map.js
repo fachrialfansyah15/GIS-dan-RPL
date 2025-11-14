@@ -405,6 +405,10 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
           autoPanPaddingBottomRight: [12, 12],
           offset: [0, -12]
         });
+        // Tambahan: ENFORCE HANYA 1 POPUP AKTIF DI MAP
+        marker.on('click', function(e) {
+          if (window._map) window._map.closePopup();
+        });
 
         // Tooltip akan sticky saat hover; tidak perlu open/close manual
 
