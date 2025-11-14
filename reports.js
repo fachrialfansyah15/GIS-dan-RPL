@@ -74,15 +74,8 @@ class ReportsPage {
 
         // Filter functionality - sudah dihandle di init(), tidak perlu duplikat di sini
 
-        const btn = document.getElementById('buatLaporanBaruBtn');
-        if(btn){
-            btn.addEventListener('click',()=>{
-                // Scroll ke form jika form ditampilkan inline (atau munculkan modal jika ada)
-                const ele = document.getElementById('damageReportForm');
-                if(ele) ele.scrollIntoView({behavior:'smooth',block:'start'});
-                // Atau: document.getElementById('formLaporanContainer').style.display='block';
-            });
-        }
+        // Tombol "Buat Laporan Baru" sekarang adalah link biasa ke report.html
+        // Tidak perlu event listener karena sudah menggunakan href
     }
 
     // Ganti: render dua list utama
