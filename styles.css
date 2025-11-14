@@ -3808,6 +3808,55 @@ body { overflow-x: hidden; }
   height: 100%;
   z-index: 0;
 }
+/* Map Controls (Zoom & Locate) - Desktop */
+.map-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1004;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: transparent;
+}
+.map-control-btn {
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #667eea;
+  font-size: 18px;
+}
+.map-control-btn:hover {
+  background: #667eea;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+.map-control-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.map-control-btn i {
+  pointer-events: none;
+}
+.map-control-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.map-control-btn:disabled:hover {
+  background: #ffffff;
+  color: #667eea;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
 #filterBox {
   position: absolute;
   bottom: 20px;
@@ -4005,5 +4054,17 @@ body { overflow-x: hidden; }
   }
   #legendBox {
     bottom: 110px !important;
+  }
+  /* Map Controls - Mobile */
+  .map-controls {
+    top: 15px !important;
+    right: 15px !important;
+    gap: 6px;
+  }
+  .map-control-btn {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+    border-radius: 6px;
   }
 }

@@ -509,7 +509,22 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     }
     
     if (locateBtn) {
-      const locate = () => { autoLocateUserWithBounds(window._map, boundsPalu); };
+      const locate = () => {
+        // Show loading state
+        const icon = locateBtn.querySelector('i');
+        if (icon) {
+          icon.className = 'fas fa-spinner fa-spin';
+          locateBtn.disabled = true;
+        }
+        autoLocateUserWithBounds(window._map, boundsPalu);
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          if (icon) {
+            icon.className = 'fas fa-crosshairs';
+            locateBtn.disabled = false;
+          }
+        }, 2000);
+      };
       locateBtn.addEventListener('click', locate);
       locateBtn.addEventListener('touchstart', (e) => { e.preventDefault(); locate(); }, { passive: false });
     }
@@ -625,7 +640,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         },
         {
           enableHighAccuracy: true,
-          timeout: 15000,
+          timeout: 20000,
           maximumAge: 0
         }
       );
