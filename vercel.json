@@ -3,7 +3,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/:page", "destination": "/:page.html", "missing": [{ "type": "file" }] }
+    { "source": "/:page((?!.*\\.).*)", "destination": "/:page.html" }
   ],
   "headers": [
     {
