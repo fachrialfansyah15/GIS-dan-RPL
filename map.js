@@ -10,6 +10,18 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     console.error("[map.js] Supabase client not initialized. Check if Supabase CDN is loaded.");
   }
 
+  // Helper: selesai icon (green) replacing base when finished
+  function getMarkerIconSelesai() {
+    const isMobile = window.innerWidth <= 600;
+    const size = isMobile ? [32, 32] : [40, 40];
+    return L.icon({
+      iconUrl: 'public/icons/marker-selesai.svg',
+      iconSize: size,
+      iconAnchor: [Math.round(size[0] / 2), size[1]],
+      popupAnchor: [0, -Math.round(size[1] * 0.85)]
+    });
+  }
+
   // Mobile hamburger -> quick actions overlay
   function setupHamburgerMenu() {
     const toggle = document.getElementById('quickActionsToggle');
@@ -381,7 +393,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
       clearLayers();
 
-      const { tipe, status, statusPengerjaan, legendFilter } = getActiveFilters();
+      const { tipe, status, statusPengerjaan: statusPengerjaanFilter, legendFilter } = getActiveFilters();
 
       let countActive = 0, countProcessing = 0, countCompleted = 0;
       let validMarkers = 0;
@@ -416,8 +428,9 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         if (tipe !== 'all' && jenis !== tipe) return;
         if (status !== 'all' && stat !== status) return;
         // apply status pengerjaan filter
-        if (statusPengerjaan !== 'all') {
-          if (statusPengerjaan === 'proses' && statPengerjaan !== 'proses') return;
+        if (statusPengerjaanFilter !== 'all') {
+          if (statusPengerjaanFilter === 'proses' && statPengerjaan !== 'proses') return;
+          if (statusPengerjaanFilter === 'selesai' && statPengerjaan !== 'selesai') return;
         }
         // apply legend filter
         if (legendFilter !== 'all' && normalizeSeverity(jenis) !== legendFilter) return;
@@ -452,9 +465,10 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
           autoPanPaddingBottomRight: [12, 12],
           offset: [0, -12]
         });
-        // Tambahan: ENFORCE HANYA 1 POPUP AKTIF DI MAP
-        marker.on('click', function(e) {
+        // Pastikan popup terbuka saat marker diklik (mobile-friendly)
+        marker.on('click', function() {
           if (window._map) window._map.closePopup();
+          marker.openPopup();
         });
 
         // Tooltip akan sticky saat hover; tidak perlu open/close manual
@@ -479,7 +493,14 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
             autoPanPaddingBottomRight: [12, 12],
             offset: [0, -12]
           });
+          overlay.on('click', function() {
+            if (window._map) window._map.closePopup();
+            overlay.openPopup();
+          });
           window._damageLayer.addLayer(overlay);
+        } else if (statusPengerjaan === 'selesai') {
+          // Ganti ikon base dengan ikon selesai
+          marker.setIcon(getMarkerIconSelesai());
         }
       });
 

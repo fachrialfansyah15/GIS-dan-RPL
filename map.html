@@ -8,22 +8,6 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-      /* Normalize filter typography and alignment */
-      #filterBox { font-size: 14px; }
-      #filterBox .filter-item { display: flex; flex-direction: column; gap: 6px; }
-      #filterBox .filter-item label { font-size: 14px; line-height: 1.2; font-weight: 600; color: #333; }
-      #filterBox .filter-item select { font-size: 14px; line-height: 1.2; height: 36px; padding: 6px 10px; }
-      /* Keep items aligned nicely in a row */
-      #filterBox { display: flex; gap: 16px; align-items: flex-end; }
-      /* Mobile: stack items and keep sizes consistent */
-      @media (max-width: 600px) {
-        #filterBox { flex-wrap: wrap; align-items: stretch; row-gap: 10px; }
-        #filterBox .filter-item { flex: 1 1 150px; }
-        #filterBox .filter-item label { font-size: 13px; }
-        #filterBox .filter-item select { width: 100%; font-size: 13px; height: 38px; }
-      }
-    </style>
 </head>
 <body>
     <div class="app-container">
@@ -128,6 +112,7 @@
                         <select id="statusPengerjaanFilter">
                             <option value="all">Semua Status</option>
                             <option value="proses">Dalam Proses</option>
+                            <option value="selesai">Selesai</option>
                         </select>
                     </div>
                     <div class="stats-item">
@@ -144,7 +129,8 @@
                         <div class="legend-item"><div class="legend-color high"></div><span>Rusak Berat</span></div>
                         <div class="legend-item"><div class="legend-color medium"></div><span>Rusak Sedang</span></div>
                         <div class="legend-item"><div class="legend-color low"></div><span>Rusak Ringan</span></div>
-                        <div class="legend-item"><div class="legend-color completed"></div><span>Selesai</span></div>
+                        <div class="legend-item"><img src="public/icons/Marker-Proses.svg" class="legend-icon" alt="Proses"><span>Proses</span></div>
+                        <div class="legend-item"><img src="public/icons/marker-selesai.svg" class="legend-icon" alt="Selesai"><span>Selesai</span></div>
                     </div>
                 </div>
             </div>

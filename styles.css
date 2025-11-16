@@ -5,6 +5,44 @@
     box-sizing: border-box;
 }
 
+/* Map page: filter box typography and layout (moved from map.html) */
+#mapContainer { position: relative; }
+#filterBox { font-size: 14px; display: flex; gap: 16px; align-items: flex-end; }
+#filterBox .filter-item { display: flex; flex-direction: column; gap: 6px; }
+#filterBox .filter-item label { font-size: 14px; line-height: 1.2; font-weight: 600; color: #333; }
+#filterBox .filter-item select { font-size: 14px; line-height: 1.2; height: 36px; padding: 6px 10px; min-width: 170px; }
+
+/* Mobile adjustments for filter box */
+@media (max-width: 600px) {
+  #filterBox { flex-wrap: wrap; align-items: stretch; row-gap: 10px; }
+  #filterBox .filter-item { flex: 1 1 160px; }
+  #filterBox .filter-item label { font-size: 13px; }
+  #filterBox .filter-item select { width: 100%; font-size: 13px; height: 38px; min-width: 0; }
+}
+
+/* Desktop: place filter box bottom-left vertically stacked */
+@media (min-width: 901px) {
+  #filterBox {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    right: auto; top: auto;
+    transform: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 280px;
+    max-height: none;
+    overflow: visible;
+    background: rgba(255, 255, 255, 0.98);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+  }
+  #filterBox .stats-item { order: 3; }
+}
+
 /* Mobile: align header content with page gutters */
 @media (max-width: 900px) {
   .header { padding: 0 16px; }
@@ -3953,53 +3991,7 @@ body { overflow-x: hidden; }
   transform: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
-#filterBox {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 380px;
-  background: #ffffff;
-  padding: 16px;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  max-height: 25vh;
-  overflow-x: auto;
-  z-index: 1002;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.filter-item,
-.stats-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-#filterBox label {
-  font-weight: 600;
-  margin-bottom: 4px;
-  font-size: 13px;
-  color: #333;
-}
-#filterBox select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: white;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  width: 100%;
-}
-#filterBox select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-}
+/* Old filterBox rules removed - now using consolidated rules at line 10-39 */
 #legendBox {
   position: absolute;
   bottom: 20px;
@@ -4009,6 +4001,13 @@ body { overflow-x: hidden; }
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   z-index: 1003;
+}
+.legend-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
 }
 #legendBox .legend-list {
   display: flex;
@@ -4081,6 +4080,17 @@ body { overflow-x: hidden; }
   #legendBox .legend-item {
     gap: 5px;
     padding: 0;
+    font-size: 12px;
+  }
+  #legendBox .legend-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+  }
+  #legendBox .legend-color {
+    width: 14px !important;
+    height: 14px !important;
+    margin-right: 6px !important;
   }
 }
 
@@ -4143,6 +4153,21 @@ body { overflow-x: hidden; }
   #legendBox .legend-item {
     gap:2px;
     padding:0 0 2px 0;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+  }
+  #legendBox .legend-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+  #legendBox .legend-color {
+    width: 12px !important;
+    height: 12px !important;
+    margin-right: 4px !important;
+    flex-shrink: 0;
   }
   .page-container, #mapContainer, #map{
     height:100vh!important;
