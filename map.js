@@ -147,6 +147,33 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     return L.divIcon({ className: 'severity-marker', html, iconSize: [26, 38], iconAnchor: [13, 38], popupAnchor: [0, -30], tooltipAnchor: [0, -32] });
   }
 
+  // Marker icons untuk status pengerjaan
+  const markerIconProses = L.icon({
+    iconUrl: '/public/icons/Marker-Proses.svg',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -35]
+  });
+
+  const markerIconSelesai = L.icon({
+    iconUrl: '/public/icons/marker-selesai.svg',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -35]
+  });
+
+  // Helper: responsive proses icon (32px on mobile, 40px otherwise)
+  function getMarkerIconProses() {
+    const isMobile = window.innerWidth <= 600;
+    const size = isMobile ? [32, 32] : [40, 40];
+    return L.icon({
+      iconUrl: '/public/icons/Marker-Proses.svg',
+      iconSize: size,
+      iconAnchor: [Math.round(size[0] / 2), size[1]],
+      popupAnchor: [0, -Math.round(size[1] * 0.85)]
+    });
+  }
+
   // Initialize map function
   function initializeMap() {
     if (window._roadMonitorMapInitialized) return;
@@ -308,7 +335,8 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
   function getActiveFilters() {
     const tipe = (document.getElementById('damageType')?.value || 'all');
     const status = (document.getElementById('statusFilter')?.value || 'all');
-    return { tipe, status, legendFilter: activeLegendFilter };
+    const statusPengerjaan = (document.getElementById('statusPengerjaanFilter')?.value || 'all');
+    return { tipe, status, statusPengerjaan, legendFilter: activeLegendFilter };
   }
 
   // Load markers from Supabase table "jalan_rusak"
@@ -341,7 +369,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
       clearLayers();
 
-      const { tipe, status, legendFilter } = getActiveFilters();
+      const { tipe, status, statusPengerjaan, legendFilter } = getActiveFilters();
 
       let countActive = 0, countProcessing = 0, countCompleted = 0;
       let validMarkers = 0;
@@ -363,6 +391,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
         const jenis = getVal(row, 'jenis_kerusakan', 'Jenis Kerusakan') || '';
         const stat = String(getVal(row, 'status') || '').toLowerCase();
+        const statPengerjaan = getVal(row, 'status_pengerjaan') || null;
 
         // Map status from table jalan_rusak to UI buckets
         // aktif -> Active; pending/in_progress/disetujui -> Processing; selesai/completed/ditolak -> Completed
@@ -374,13 +403,28 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         // apply filters
         if (tipe !== 'all' && jenis !== tipe) return;
         if (status !== 'all' && stat !== status) return;
+        // apply status pengerjaan filter
+        if (statusPengerjaan !== 'all') {
+          if (statusPengerjaan === 'proses' && statPengerjaan !== 'proses') return;
+        }
         // apply legend filter
         if (legendFilter !== 'all' && normalizeSeverity(jenis) !== legendFilter) return;
 
         // Build popup and marker
         const popup = renderPopupContent(row);
-        // Colored icon based on severity
-        const marker = L.marker([lat, lng], { icon: createSeverityIcon(jenis) });
+        
+        // Pilih ikon berdasarkan status_pengerjaan
+        const statusPengerjaan = getVal(row, 'status_pengerjaan') || null;
+        let markerIcon;
+        
+        if (statusPengerjaan === 'proses') {
+          markerIcon = getMarkerIconProses();
+        } else {
+          // Jika status_pengerjaan null atau tidak ada, gunakan marker normal berdasarkan jenis kerusakan
+          markerIcon = createSeverityIcon(jenis);
+        }
+        
+        const marker = L.marker([lat, lng], { icon: markerIcon });
 
         // Tooltip pada hover: tampilkan info vertikal + foto di bawah
         const tooltipImageUrl = getPhotoUrl(row.foto_jalan);
@@ -481,8 +525,10 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     // Filter changes
     const dmgSelect = document.getElementById('damageType');
     const statusSelect = document.getElementById('statusFilter');
+    const statusPengerjaanSelect = document.getElementById('statusPengerjaanFilter');
     if (dmgSelect) dmgSelect.addEventListener('change', loadMarkersFromSupabase);
     if (statusSelect) statusSelect.addEventListener('change', loadMarkersFromSupabase);
+    if (statusPengerjaanSelect) statusPengerjaanSelect.addEventListener('change', loadMarkersFromSupabase);
 
     // Layer toggles (damage / maintenance)
     const damageCheckbox = document.getElementById('damage');

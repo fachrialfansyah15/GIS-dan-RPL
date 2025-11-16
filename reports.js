@@ -249,19 +249,65 @@ class ReportsPage {
         const html = rows.map(r=>{
             const s = (r.status||'').toLowerCase();
             const statusText = mapStatus(r.status);
+            const statusPengerjaan = r.status_pengerjaan || null;
             // Mapping jenis kerusakan ke Bahasa Indonesia untuk display
             const jenisDisplay = mapJenisKerusakan(r.jenis_kerusakan);
-            return `<div class="report-card" data-status="${s}">
+            
+            // Tombol aksi hanya untuk admin
+            const isAdmin = window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin();
+            let actionButtons = '';
+            if (isAdmin) {
+                // Status badge untuk status pengerjaan
+                let statusBadge = '';
+                if (statusPengerjaan === 'proses') {
+                    statusBadge = '<div style="margin-bottom:8px;"><span style="display:inline-block;background:#3b82f6;color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;"><i class="fas fa-cog fa-spin"></i> Dalam Proses</span></div>';
+                }
+                
+                actionButtons = `
+                    <div class="report-actions" style="margin-top:12px;">
+                        ${statusBadge}
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn-proses" data-id="${r.id}" style="flex:1;background:#3b82f6;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
+                                <i class="fas fa-wrench"></i> Proses
+                            </button>
+                            <button class="btn-hapus" data-id="${r.id}" data-foto="${r.foto_jalan||''}" style="flex:1;background:#dc3545;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `<div class="report-card" data-status="${s}" data-id="${r.id}">
                 <div class="report-header"><div class="report-id">${r.id}</div><div class="report-status ${s}">${statusText}</div></div>
                 <div class="report-content">
                 <h3>${jenisDisplay}</h3>
                 <p class="report-location"><i class="fas fa-map-marker-alt"></i>${r.nama_jalan||''}</p>
                 <div class="report-meta"><span class="report-date"><i class="fas fa-clock"></i>${r.tanggal_survey?new Date(r.tanggal_survey).toLocaleString():''}</span></div>
                 <div class="report-description">${r.description||''}</div>
+                ${actionButtons}
                 </div>
             </div>`;
         }).join('');
         box.innerHTML = html;
+        
+        // Attach event listeners untuk tombol Proses dan Hapus
+        if (window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin()) {
+            document.querySelectorAll('.btn-proses').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    this.prosesLaporan(id);
+                });
+            });
+            
+            document.querySelectorAll('.btn-hapus').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    const foto = e.currentTarget.getAttribute('data-foto');
+                    this.hapusLaporan(id, foto);
+                });
+            });
+        }
     }
 
     filterReports() {
@@ -344,6 +390,121 @@ class ReportsPage {
             this.showMessage('Gagal menolak laporan','error');
         } else {
             this.showMessage('Laporan ditolak','success');
+        }
+    }
+
+    // Fungsi untuk mengubah status_pengerjaan menjadi "proses"
+    async prosesLaporan(id) {
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) {
+            this.showMessage('Supabase tidak tersedia', 'error');
+            return;
+        }
+        
+        // Cek apakah user adalah admin
+        if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) {
+            this.showMessage('Hanya admin yang dapat memproses laporan', 'error');
+            return;
+        }
+        
+        try {
+            // Update status_pengerjaan menjadi "proses"
+            const { error } = await supabase
+                .from('jalan_rusak')
+                .update({ status_pengerjaan: 'proses' })
+                .eq('id', id);
+            
+            if (error) {
+                console.error('[prosesLaporan] Error:', error);
+                this.showMessage('Gagal memproses laporan', 'error');
+                return;
+            }
+            
+            this.showMessage('Laporan berhasil diproses! Marker akan berubah di peta.', 'success');
+            
+            // Reload laporan untuk update UI
+            await this.loadLaporanValid();
+            
+            // Refresh marker di peta jika fungsi tersedia
+            if (window.refreshJalanRusakMarkers) {
+                window.refreshJalanRusakMarkers();
+            }
+        } catch (err) {
+            console.error('[prosesLaporan] Exception:', err);
+            this.showMessage('Terjadi kesalahan saat memproses laporan', 'error');
+        }
+    }
+
+    // Fungsi untuk menghapus laporan (selesai)
+    async hapusLaporan(id, fotoPath) {
+        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        if (!supabase) {
+            this.showMessage('Supabase tidak tersedia', 'error');
+            return;
+        }
+        
+        // Cek apakah user adalah admin
+        if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) {
+            this.showMessage('Hanya admin yang dapat menghapus laporan', 'error');
+            return;
+        }
+        
+        // Alert pertama: konfirmasi hapus
+        const confirm1 = confirm('⚠️ Apakah Anda yakin ingin menghapus laporan ini?');
+        if (!confirm1) return;
+        
+        // Alert kedua: peringatan data tidak bisa dikembalikan
+        const confirm2 = confirm('🚨 Data yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?');
+        if (!confirm2) return;
+        
+        try {
+            // Hapus file foto dari storage (opsional)
+            if (fotoPath && fotoPath.trim() !== '') {
+                // Extract filename dari URL atau path
+                let filename = fotoPath;
+                
+                // Jika fotoPath adalah URL lengkap, extract filename
+                if (fotoPath.startsWith('http')) {
+                    const urlParts = fotoPath.split('/');
+                    filename = urlParts[urlParts.length - 1];
+                }
+                
+                console.log('[hapusLaporan] Attempting to delete photo:', filename);
+                
+                const { error: storageError } = await supabase.storage
+                    .from('foto_jalan')
+                    .remove([filename]);
+                
+                if (storageError) {
+                    console.warn('[hapusLaporan] Failed to delete photo:', storageError);
+                    // Lanjutkan hapus data meski foto gagal dihapus
+                }
+            }
+            
+            // Hapus baris dari tabel jalan_rusak
+            const { error: deleteError } = await supabase
+                .from('jalan_rusak')
+                .delete()
+                .eq('id', id);
+            
+            if (deleteError) {
+                console.error('[hapusLaporan] Error deleting record:', deleteError);
+                this.showMessage('Gagal menghapus laporan dari database', 'error');
+                return;
+            }
+            
+            this.showMessage('✅ Laporan berhasil dihapus! Marker akan hilang dari peta.', 'success');
+            
+            // Reload laporan untuk update UI
+            await this.loadLaporanValid();
+            
+            // Refresh marker di peta jika fungsi tersedia
+            if (window.refreshJalanRusakMarkers) {
+                window.refreshJalanRusakMarkers();
+            }
+        } catch (err) {
+            console.error('[hapusLaporan] Exception:', err);
+            this.showMessage('Terjadi kesalahan saat menghapus laporan', 'error');
         }
     }
 
@@ -490,6 +651,37 @@ reportsStyles.textContent = `
 
     .report-card:hover {
         transform: translateY(-5px);
+    }
+
+    .btn-proses:hover {
+        background: #2563eb !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-hapus:hover {
+        background: #b91c1c !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-proses:active, .btn-hapus:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 600px) {
+        .btn-proses, .btn-hapus {
+            font-size: 12px !important;
+            padding: 6px 10px !important;
+        }
+        
+        .report-actions > div {
+            flex-direction: column !important;
+        }
+        
+        .btn-proses, .btn-hapus {
+            width: 100% !important;
+        }
     }
 
     .report-header {

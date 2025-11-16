@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Generate Proses Wrench Icons (PNG + Base64)</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .row { display:flex; flex-wrap:wrap; gap:24px; }
+    .card { border:1px solid #e5e7eb; border-radius:12px; padding:16px; width:320px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    canvas { border:1px solid #eee; border-radius:8px; display:block; margin-bottom:10px; }
+    button { background:#4285F4; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; }
+    button:hover { background:#2b6adf; }
+    .b64 { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; background:#fafafa; border:1px solid #eee; border-radius:8px; padding:8px; height:84px; overflow:auto; }
+    .actions { display:flex; gap:8px; align-items:center; margin:8px 0; }
+    .muted { color:#666; font-size:12px; }
+  </style>
+</head>
+<body>
+  <h1>Generate Ikon "Proses" (Wrench) - PNG + Base64</h1>
+  <p class="muted">Klik "Download PNG" untuk menyimpan file dan "Salin Base64" untuk menyalin data URL PNG.</p>
+  <div class="row">
+    <div class="card">
+      <h3>32 × 32 (Mobile)</h3>
+      <canvas id="c32" width="32" height="32"></canvas>
+      <div class="actions">
+        <button onclick="downloadPng('c32','marker-proses-wrench-32.png')">Download PNG</button>
+        <button onclick="copyBase64('c32')">Salin Base64</button>
+      </div>
+      <div id="b32" class="b64"></div>
+    </div>
+
+    <div class="card">
+      <h3>40 × 40 (Lebih besar)</h3>
+      <canvas id="c40" width="40" height="40"></canvas>
+      <div class="actions">
+        <button onclick="downloadPng('c40','marker-proses-wrench-40.png')">Download PNG</button>
+        <button onclick="copyBase64('c40')">Salin Base64</button>
+      </div>
+      <div id="b40" class="b64"></div>
+    </div>
+  </div>
+
+<script>
+const BLUE = '#4285F4';
+function drawIcon(ctx, size){
+  const cx = size/2, cy = size/2;
+  // clear
+  ctx.clearRect(0,0,size,size);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // circle background
+  const r = size===32 ? 14 : 17;
+  const stroke = size===32 ? 4 : 6;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = BLUE;
+  ctx.fill();
+  ctx.lineWidth = stroke;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.stroke();
+
+  // wrench silhouette (minimal)
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-15*Math.PI/180);
+  ctx.fillStyle = '#FFFFFF';
+
+  // body path (scaled to size)
+  const scale = size===32 ? 1 : 1.25;
+  ctx.beginPath();
+  ctx.moveTo(-8*scale, -1*scale);
+  ctx.lineTo(-3*scale, -6*scale);
+  ctx.lineTo(2*scale, -1*scale);
+  ctx.lineTo(4*scale, -3*scale);
+  ctx.lineTo(7*scale, 0*scale);
+  ctx.lineTo(0*scale, 7*scale);
+  ctx.lineTo(2*scale, 9*scale);
+  ctx.lineTo(0*scale, 11*scale);
+  ctx.lineTo(-3*scale, 9*scale);
+  ctx.lineTo(-10*scale, 2*scale);
+  ctx.closePath();
+  ctx.fill();
+
+  // wrench head hole
+  ctx.beginPath();
+  ctx.arc(-3*scale, -7*scale, (size===32?1.4:1.7)*scale, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function init(){
+  const c32 = document.getElementById('c32');
+  const c40 = document.getElementById('c40');
+  drawIcon(c32.getContext('2d'), 32);
+  drawIcon(c40.getContext('2d'), 40);
+  // show base64 previews
+  document.getElementById('b32').textContent = c32.toDataURL('image/png');
+  document.getElementById('b40').textContent = c40.toDataURL('image/png');
+}
+
+function downloadPng(canvasId, filename){
+  const c = document.getElementById(canvasId);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = c.toDataURL('image/png');
+  link.click();
+}
+
+async function copyBase64(canvasId){
+  const c = document.getElementById(canvasId);
+  const data = c.toDataURL('image/png');
+  try {
+    await navigator.clipboard.writeText(data);
+    alert('Base64 PNG disalin ke clipboard!');
+  } catch(e){
+    const boxId = canvasId==='c32'?'b32':'b40';
+    const box = document.getElementById(boxId);
+    box.textContent = data;
+    alert('Gagal akses clipboard. Base64 ditampilkan di kotak untuk disalin manual.');
+  }
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
