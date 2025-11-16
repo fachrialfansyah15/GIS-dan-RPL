@@ -149,14 +149,14 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
   // Marker icons untuk status pengerjaan
   const markerIconProses = L.icon({
-    iconUrl: '/public/icons/Marker-Proses.svg',
+    iconUrl: 'public/icons/Marker-Proses.svg',
     iconSize: [40, 40],
     iconAnchor: [20, 40],
     popupAnchor: [0, -35]
   });
 
   const markerIconSelesai = L.icon({
-    iconUrl: '/public/icons/marker-selesai.svg',
+    iconUrl: 'public/icons/marker-selesai.svg',
     iconSize: [40, 40],
     iconAnchor: [20, 40],
     popupAnchor: [0, -35]
@@ -167,7 +167,19 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     const isMobile = window.innerWidth <= 600;
     const size = isMobile ? [32, 32] : [40, 40];
     return L.icon({
-      iconUrl: '/public/icons/Marker-Proses.svg',
+      iconUrl: 'public/icons/Marker-Proses.svg',
+      iconSize: size,
+      iconAnchor: [Math.round(size[0] / 2), size[1]],
+      popupAnchor: [0, -Math.round(size[1] * 0.85)]
+    });
+  }
+
+  // Helper: smaller overlay icon for status 'proses' shown on top of base marker
+  function getMarkerIconProsesSmall() {
+    const isMobile = window.innerWidth <= 600;
+    const size = isMobile ? [20, 20] : [28, 28];
+    return L.icon({
+      iconUrl: 'public/icons/Marker-Proses.svg',
       iconSize: size,
       iconAnchor: [Math.round(size[0] / 2), size[1]],
       popupAnchor: [0, -Math.round(size[1] * 0.85)]
@@ -410,21 +422,12 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         // apply legend filter
         if (legendFilter !== 'all' && normalizeSeverity(jenis) !== legendFilter) return;
 
-        // Build popup and marker
+        // Build popup
         const popup = renderPopupContent(row);
-        
-        // Pilih ikon berdasarkan status_pengerjaan
-        const statusPengerjaan = getVal(row, 'status_pengerjaan') || null;
-        let markerIcon;
-        
-        if (statusPengerjaan === 'proses') {
-          markerIcon = getMarkerIconProses();
-        } else {
-          // Jika status_pengerjaan null atau tidak ada, gunakan marker normal berdasarkan jenis kerusakan
-          markerIcon = createSeverityIcon(jenis);
-        }
-        
-        const marker = L.marker([lat, lng], { icon: markerIcon });
+
+        // Selalu render marker awal (severity)
+        const baseIcon = createSeverityIcon(jenis);
+        const marker = L.marker([lat, lng], { icon: baseIcon });
 
         // Tooltip pada hover: tampilkan info vertikal + foto di bawah
         const tooltipImageUrl = getPhotoUrl(row.foto_jalan);
@@ -461,6 +464,23 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         });
 
         window._damageLayer.addLayer(marker);
+
+        // Jika status 'proses', tambahkan overlay ikon proses yang lebih kecil di atas marker awal
+        const statusPengerjaan = getVal(row, 'status_pengerjaan') || null;
+        if (statusPengerjaan === 'proses') {
+          const overlayIcon = getMarkerIconProsesSmall();
+          const overlay = L.marker([lat, lng], { icon: overlayIcon, zIndexOffset: 1000 });
+          overlay.bindPopup(popup, {
+            maxWidth: 320,
+            minWidth: 240,
+            keepInView: true,
+            autoPan: true,
+            autoPanPaddingTopLeft: [12, 90],
+            autoPanPaddingBottomRight: [12, 12],
+            offset: [0, -12]
+          });
+          window._damageLayer.addLayer(overlay);
+        }
       });
 
       // update stats UI (both desktop and mobile views)

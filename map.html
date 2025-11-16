@@ -8,6 +8,22 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      /* Normalize filter typography and alignment */
+      #filterBox { font-size: 14px; }
+      #filterBox .filter-item { display: flex; flex-direction: column; gap: 6px; }
+      #filterBox .filter-item label { font-size: 14px; line-height: 1.2; font-weight: 600; color: #333; }
+      #filterBox .filter-item select { font-size: 14px; line-height: 1.2; height: 36px; padding: 6px 10px; }
+      /* Keep items aligned nicely in a row */
+      #filterBox { display: flex; gap: 16px; align-items: flex-end; }
+      /* Mobile: stack items and keep sizes consistent */
+      @media (max-width: 600px) {
+        #filterBox { flex-wrap: wrap; align-items: stretch; row-gap: 10px; }
+        #filterBox .filter-item { flex: 1 1 150px; }
+        #filterBox .filter-item label { font-size: 13px; }
+        #filterBox .filter-item select { width: 100%; font-size: 13px; height: 38px; }
+      }
+    </style>
 </head>
 <body>
     <div class="app-container">
