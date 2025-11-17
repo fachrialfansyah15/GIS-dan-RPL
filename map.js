@@ -115,6 +115,8 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
       }
       .leaflet-tooltip-own b { font-weight: 700; }
       .leaflet-tooltip-own img { display:block; }
+      .leaflet-popup-content img.popup-photo { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; display: block; margin-top: 8px; }
+      @media (max-width: 600px) { .leaflet-popup-content img.popup-photo { height: 160px; } }
     `;
     document.head.appendChild(style);
   }
@@ -351,8 +353,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     // Build foto HTML sesuai format yang diminta
     let fotoHtml = '';
     if (imageURL) {
-      // Fixed pixel width so it doesn't scale with map zoom
-      fotoHtml = `<img src="${imageURL}" style="margin-top:8px; border-radius:10px; display:block; width:300px; height:auto; max-width:300px;" onerror="this.style.display='none';">`;
+      fotoHtml = `<img src="${imageURL}" class="popup-photo" onerror="this.style.display='none';">`;
     }
 
     // Format popup sesuai permintaan
