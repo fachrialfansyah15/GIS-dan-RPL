@@ -4059,6 +4059,9 @@ body { overflow-x: hidden; }
 .status-badge-proses i {
   font-size: 14px !important;
 }
+/* Hide only bell + Profile and Settings; keep Logout accessible */
+#notificationsBtn { display: none !important; }
+#profileLink, #settingsLink { display: none !important; }
 /* Ensure map preview controls always stick to top-right inside the preview after redirects */
 #mapPreview .map-preview-controls {
   position: absolute !important;
