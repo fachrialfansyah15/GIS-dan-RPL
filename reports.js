@@ -47,6 +47,38 @@ class ReportsPage {
         }
     }
 
+    // Reset status_pengerjaan ke kosong (kembali ke kondisi awal)
+    async resetStatusPengerjaan(id) {
+        console.log('[resetStatusPengerjaan] Called with id:', id);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
+        if (!supabase) {
+            this.showMessage('Supabase tidak tersedia', 'error');
+            return;
+        }
+        if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) {
+            this.showMessage('Hanya admin yang dapat mereset status', 'error');
+            return;
+        }
+        try {
+            const { data, error } = await supabase
+                .from('jalan_rusak')
+                .update({ status_pengerjaan: '' })
+                .eq('id', id)
+                .select();
+            console.log('[resetStatusPengerjaan] Update result:', { data, error });
+            if (error) {
+                this.showMessage('Gagal mereset status: ' + error.message, 'error');
+                return;
+            }
+            this.showMessage('Status pengerjaan dikembalikan.', 'success');
+            await this.renderValidList();
+            if (window.refreshJalanRusakMarkers) window.refreshJalanRusakMarkers();
+        } catch (err) {
+            console.error('[resetStatusPengerjaan] Exception:', err);
+            this.showMessage('Terjadi kesalahan saat mereset status', 'error');
+        }
+    }
+
     init() {
         this.checkAuth();
         this.setupEventListeners();
@@ -250,7 +282,15 @@ class ReportsPage {
             if (error) throw error; rows=data||[];
         }catch(e){ box.innerHTML=`<div class="no-reports">${e.message}</div>`; return; }
         // FILTER: status dan priority (jenis kerusakan via priority filter)
-        const statusVal = (document.getElementById('statusFilter')||{}).value||'all';
+        const statusSelectEl = document.getElementById('statusFilter');
+        // Ubah label 'Menunggu/Pending' menjadi 'Dalam Proses' di UI jika ada
+        if (statusSelectEl) {
+            Array.from(statusSelectEl.options).forEach(opt => {
+                const v = String(opt.value||'').toLowerCase();
+                if (v === 'pending' || v === 'menunggu') opt.textContent = 'Dalam Proses';
+            });
+        }
+        const statusVal = (statusSelectEl||{}).value||'all';
         const priorityVal = (document.getElementById('priorityFilter')||{}).value||'all';
         function mapPriority(jenis) {
             const s = String(jenis||'').toLowerCase();
@@ -261,10 +301,18 @@ class ReportsPage {
         }
         rows = rows.filter(r=>{
             let pass = true;
-            // Filter status
+            // Filter status: gunakan kolom status_pengerjaan untuk 'Dalam Proses' dan 'Selesai'
             if(statusVal!=='all') {
-                const rStatus = (r.status||'').toLowerCase().trim();
-                pass = pass && (rStatus===statusVal.toLowerCase().trim());
+                const sel = statusVal.toLowerCase().trim();
+                const pengerjaan = String(r.status_pengerjaan||'').toLowerCase().trim();
+                const rStatus = String(r.status||'').toLowerCase().trim();
+                if (sel === 'aktif') {
+                    pass = pass && (rStatus === 'aktif' || rStatus === '' || rStatus === null);
+                } else if (['pending','menunggu','proses','dalam proses'].includes(sel)) {
+                    pass = pass && (pengerjaan === 'proses');
+                } else if (sel === 'selesai') {
+                    pass = pass && (pengerjaan === 'selesai');
+                }
             }
             // Filter priority (berdasarkan jenis kerusakan)
             if(priorityVal!=='all') {
@@ -307,7 +355,8 @@ class ReportsPage {
                 // Status badge untuk status pengerjaan
                 let statusBadge = '';
                 if (statusPengerjaan === 'proses') {
-                    statusBadge = '<div style="margin-bottom:8px;"><span style="display:inline-block;background:#3b82f6;color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;"><i class="fas fa-cog fa-spin"></i> Dalam Proses</span></div>';
+                    // Badge disamakan ukurannya dengan tombol di samping
+                    statusBadge = '<div style="margin-bottom:8px;"><span style="display:inline-flex;align-items:center;gap:6px;background:#3b82f6;color:#fff;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;"><i class="fas fa-cog fa-spin"></i> Dalam Proses</span></div>';
                 }
                 
                 actionButtons = `
@@ -319,6 +368,9 @@ class ReportsPage {
                             </button>
                             <button class="btn-selesai" data-id="${r.id}" style="flex:1;background:#16a34a;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
                                 <i class="fas fa-check-circle"></i> Selesai
+                            </button>
+                            <button class="btn-reset" data-id="${r.id}" style="flex:1;background:#6b7280;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
+                                <i class="fas fa-undo"></i> Reset Status
                             </button>
                             <button class="btn-hapus" data-id="${r.id}" data-foto="${r.foto_jalan||''}" style="flex:1;background:#dc3545;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
                                 <i class="fas fa-trash"></i> Hapus
@@ -353,6 +405,12 @@ class ReportsPage {
                 btn.addEventListener('click', (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
                     this.selesaiLaporan(id);
+                });
+            });
+            document.querySelectorAll('.btn-reset').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    this.resetStatusPengerjaan(id);
                 });
             });
             
