@@ -175,13 +175,18 @@ class ReportsPage {
             }
             // Mapping jenis kerusakan ke Bahasa Indonesia untuk display
             const jenisDisplay = mapJenisKerusakan(r.jenis_kerusakan);
+            const fotoUrl = r.foto_jalan || '';
+            const fotoEl = fotoUrl ? `<div class="report-media"><img src="${fotoUrl}" alt="Foto jalan" onerror="this.style.display='none'"/></div>` : '';
             return `<div class="report-card" data-status="${s}">
                 <div class="report-header"><div class="report-id">${r.id}</div><div class="report-status ${s}">${statusText}</div></div>
                 <div class="report-content">
-                <h3>${jenisDisplay}</h3>
-                <p class="report-location"><i class="fas fa-map-marker-alt"></i>${r.nama_jalan||''}</p>
-                <div class="report-meta"><span class="report-date"><i class="fas fa-clock"></i>${r.created_at?new Date(r.created_at).toLocaleString():''}</span></div>
-                <div class="report-description">${r.description||''}</div>
+                  <div class="report-body">
+                    <h3>${jenisDisplay}</h3>
+                    <p class="report-location"><i class="fas fa-map-marker-alt"></i>${r.nama_jalan||''}</p>
+                    <div class="report-meta"><span class="report-date"><i class="fas fa-clock"></i>${r.created_at?new Date(r.created_at).toLocaleString():''}</span></div>
+                    <div class="report-description">${r.description||''}</div>
+                  </div>
+                  ${fotoEl}
                 </div>
                 <div class="report-actions">${actionBtns}</div></div>`;
         }).join('');
@@ -682,6 +687,16 @@ reportsStyles.textContent = `
         .btn-proses, .btn-hapus {
             width: 100% !important;
         }
+
+        #laporanBaruList .report-content {
+            flex-direction: column;
+        }
+        #laporanBaruList .report-media {
+            width: 100%;
+            height: 180px; /* responsive fixed height on mobile */
+            max-height: 40vh;
+            flex: 0 0 auto;
+        }
     }
 
     .report-header {
@@ -722,8 +737,35 @@ reportsStyles.textContent = `
         color: #155724;
     }
 
-    .report-content {
+    #laporanBaruList .report-content {
         padding: 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    #laporanBaruList .report-body {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    #laporanBaruList .report-media {
+        flex: 0 0 auto;
+        width: 220px;
+        height: 160px; /* fixed box height on desktop */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f6f7fb;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    #laporanBaruList .report-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
     }
 
     .report-content h3 {
