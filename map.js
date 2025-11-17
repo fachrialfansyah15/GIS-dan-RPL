@@ -438,20 +438,8 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         // Build popup
         const popup = renderPopupContent(row);
 
-        // Selalu render marker awal (severity)
         const baseIcon = createSeverityIcon(jenis);
         const marker = L.marker([lat, lng], { icon: baseIcon });
-
-        // Tooltip pada hover: tampilkan info vertikal + foto di bawah
-        const tooltipImageUrl = getPhotoUrl(row.foto_jalan);
-        const tooltipHtml = `
-          <div style="font-family:Arial,sans-serif; max-width:240px;">
-            <div><b>Nama Jalan:</b> ${row.nama_jalan || '-'}</div>
-            <div style="margin-top:4px;"><b>Jenis Kerusakan:</b> ${row.jenis_kerusakan || '-'}</div>
-            ${tooltipImageUrl ? `<img src="${tooltipImageUrl}" style="margin-top:6px; width:180px; height:auto; border-radius:8px; display:block;" onerror="this.style.display='none';">` : ''}
-          </div>
-        `;
-        marker.bindTooltip(tooltipHtml, { direction: 'top', offset: [0, -10], sticky: true, opacity: 0.95, className: 'leaflet-tooltip-own' });
 
         // Bind popup dengan ukuran yang sesuai (klik untuk membuka)
         // Ensure popup stays within the visible map area and does not cross the header

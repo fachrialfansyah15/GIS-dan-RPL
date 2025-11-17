@@ -26,6 +26,19 @@ const boundsPalu = L.latLngBounds(
   [-0.70, 120.02]   // Northeast (menjangkau Tawaeli + buffer)
 );
 
+// --- Lightweight toast helper (konsisten antar halaman) ---
+function showToast(msg, type = 'info') {
+  const existing = document.getElementById('toastReport');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'toastReport';
+  const bg = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#667eea';
+  toast.style.cssText = `position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: ${bg}; color: #fff; padding: 12px 18px; border-radius: 10px; z-index: 10000; box-shadow: 0 6px 18px rgba(0,0,0,.2); font-weight: 600;`;
+  toast.innerHTML = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 3000);
+}
+
 // ========== Reverse Geocoding Function ==========
 async function reverseGeocode(lat, lng) {
   try {
@@ -150,48 +163,57 @@ async function loadSelectedLocation() {
 
 // ========== Auto Geolocate ==========
 function handleGeolocate() {
+  const btn = document.getElementById('geolocateBtn');
+  const icon = btn?.querySelector('i');
   if (!navigator.geolocation) {
-    alert("⚠️ Browser Anda tidak mendukung geolocation");
+    showToast('Browser Anda tidak mendukung geolocation', 'error');
     return;
   }
-  
-  console.log("[report.js] Attempting to get user location...");
-  
+
+  if (icon) { icon.className = 'fas fa-spinner fa-spin'; btn.disabled = true; }
+  console.log('[report.js] Attempting to get user location...');
+
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      
-      console.log(`[report.js] User location: ${lat}, ${lng}`);
-      
-      // Validasi apakah di dalam bounds Palu
-      if (!boundsPalu.contains([lat, lng])) {
-        alert("⚠️ Lokasi Anda berada di luar wilayah Kota Palu. Silakan pilih lokasi secara manual.");
-        return;
+      const accuracy = position.coords.accuracy || 0;
+      console.log(`[report.js] User location: ${lat}, ${lng} (±${accuracy}m)`);
+
+      if (accuracy > 150) {
+        showToast('Akurasi lokasi rendah. Mendekat ke estimasi posisi Anda.', 'info');
       }
-      
+
+      const userLatLng = L.latLng(lat, lng);
+      const inside = boundsPalu.contains(userLatLng);
+
       // Set marker di lokasi user
       if (marker) marker.remove();
       marker = L.marker([lat, lng]).addTo(map);
-      map.setView([lat, lng], 16);
-      
+      map.setView([lat, lng], inside ? 16 : 13);
+      if (!inside) {
+        showToast('Lokasi Anda berada di luar area Palu – peta tetap dipusatkan ke posisi Anda.', 'info');
+      }
+
       // Update form
-      document.getElementById("coordinates").value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      document.getElementById("latitude").value = lat.toFixed(6);
-      document.getElementById("longitude").value = lng.toFixed(6);
-      
-      console.log("[report.js] Location set to user position");
-      
+      document.getElementById('coordinates').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      document.getElementById('latitude').value = lat.toFixed(6);
+      document.getElementById('longitude').value = lng.toFixed(6);
+
       // Auto-fill nama jalan dengan reverse geocoding
       await reverseGeocode(lat, lng);
     },
     (error) => {
-      console.error("[report.js] Geolocation error:", error);
-      alert("⚠️ Tidak dapat mengakses lokasi Anda. Pastikan Anda mengizinkan akses lokasi di browser.");
+      console.error('[report.js] Geolocation error:', error);
+      showToast('Tidak dapat mengakses lokasi. Pastikan izin lokasi diaktifkan.', 'error');
     },
-    // DITEKAN: gunakan mode akurasi tinggi dan timeout ekstra
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
   );
+
+  // Pulihkan ikon tombol setelah 2 detik
+  setTimeout(() => {
+    if (icon) { icon.className = 'fas fa-crosshairs'; btn.disabled = false; }
+  }, 2000);
 }
 
 // ========== Inisialisasi saat DOM ready ==========
