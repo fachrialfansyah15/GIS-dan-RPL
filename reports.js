@@ -355,8 +355,8 @@ class ReportsPage {
                 // Status badge untuk status pengerjaan
                 let statusBadge = '';
                 if (statusPengerjaan === 'proses') {
-                    // Badge disamakan ukurannya dengan tombol di samping
-                    statusBadge = '<div style="margin-bottom:8px;"><span style="display:inline-flex;align-items:center;gap:6px;background:#3b82f6;color:#fff;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;"><i class="fas fa-cog fa-spin"></i> Dalam Proses</span></div>';
+                    // CSS class sudah di styles.css, tinggal pakai
+                    statusBadge = '<div style="margin-bottom:8px;"><span class="status-badge-proses"><i class="fas fa-cog fa-spin"></i> Dalam Proses</span></div>';
                 }
                 
                 actionButtons = `
