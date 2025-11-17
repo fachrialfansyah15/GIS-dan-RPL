@@ -220,6 +220,13 @@ function handleGeolocate() {
 document.addEventListener("DOMContentLoaded", () => {
   console.log("[report.js] DOM loaded, initializing...");
   
+  // Sync header username for this page (other pages do it in their own JS)
+  try {
+    const el = document.getElementById('userName');
+    const name = window.auth && typeof window.auth.getCurrentUser === 'function' ? window.auth.getCurrentUser() : null;
+    if (el && name) el.textContent = name;
+  } catch (_) {}
+
   // Load koordinat dari URL/localStorage jika ada
   loadSelectedLocation();
   
