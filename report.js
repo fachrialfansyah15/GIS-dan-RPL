@@ -1,5 +1,5 @@
-// Gunakan Supabase config dari window (sudah di-set di HTML)
-const supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+// Gunakan singleton Supabase client agar tidak membuat banyak instance
+const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
 // Try multiple bucket ids to be resilient to dash/underscore differences
 const BUCKET_CANDIDATES = Array.isArray(window.SUPABASE_BUCKETS) && window.SUPABASE_BUCKETS.length
   ? window.SUPABASE_BUCKETS

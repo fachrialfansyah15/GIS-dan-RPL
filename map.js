@@ -4,7 +4,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 (function () {
   // Initialize Supabase client
-  const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+  const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
   
   if (!supabase) {
     console.error("[map.js] Supabase client not initialized. Check if Supabase CDN is loaded.");
@@ -139,6 +139,18 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     return val;
   }
 
+  // Normalize status_pengerjaan to canonical values: 'proses' | 'selesai' | ''
+  function normalizePengerjaan(val) {
+    if (!val || val === '') return '';
+    const s = String(val).toLowerCase().trim();
+    // Treat various synonyms as 'proses'
+    if (['proses','in_progress','processing','process','ongoing','dalam proses'].includes(s)) return 'proses';
+    // Treat various synonyms as 'selesai'
+    if (['selesai','completed','done','closed'].includes(s)) return 'selesai';
+    // Ignore other values (like 'valid' or empty string)
+    return '';
+  }
+
   function severityColor(sev) {
     const n = normalizeSeverity(sev);
     if (n === 'Rusak Berat') return '#dc3545'; // red
@@ -189,12 +201,15 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
   // Helper: smaller overlay icon for status 'proses' shown on top of base marker
   function getMarkerIconProsesSmall() {
     const isMobile = window.innerWidth <= 600;
-    const size = isMobile ? [20, 20] : [28, 28];
+    // Even smaller overlay icon
+    const size = isMobile ? [14, 14] : [18, 18];
+    // Push anchor further so the overlay sits higher above the base marker
+    const anchorY = size[1] + (isMobile ? 26 : 30);
     return L.icon({
       iconUrl: 'public/icons/Marker-Proses.svg',
       iconSize: size,
-      iconAnchor: [Math.round(size[0] / 2), size[1]],
-      popupAnchor: [0, -Math.round(size[1] * 0.85)]
+      iconAnchor: [Math.round(size[0] / 2), anchorY],
+      popupAnchor: [0, -Math.round(size[1] * 0.6)]
     });
   }
 
@@ -394,16 +409,16 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
       clearLayers();
 
       const { tipe, status, statusPengerjaan: statusPengerjaanFilter, legendFilter } = getActiveFilters();
+      console.log('[map.js] Active filters:', { tipe, status, statusPengerjaanFilter, legendFilter });
 
       let countActive = 0, countProcessing = 0, countCompleted = 0;
       let validMarkers = 0;
+      let renderedMarkers = 0;
 
       data.forEach((row, index) => {
         // Ambil koordinat dari kolom Latitude dan Longitude (HURUF BESAR DI AWAL!)
         const lat = parseFloat(row.Latitude);
         const lng = parseFloat(row.Longitude);
-
-        console.log(`[map.js] Row ${index} (${row.nama_jalan}): Latitude=${lat}, Longitude=${lng}`);
 
         // Validasi koordinat
         if (isNaN(lat) || isNaN(lng)) {
@@ -415,25 +430,46 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
         const jenis = getVal(row, 'jenis_kerusakan', 'Jenis Kerusakan') || '';
         const stat = String(getVal(row, 'status') || '').toLowerCase();
-        const statPengerjaan = getVal(row, 'status_pengerjaan') || null;
+        const statPengerjaan = normalizePengerjaan(getVal(row, 'status_pengerjaan', 'statusPengerjaan', 'Status Pengerjaan', 'status pengerjaan')) || '';
 
         // Map status from table jalan_rusak to UI buckets
         // aktif -> Active; pending/in_progress/disetujui -> Processing; selesai/completed/ditolak -> Completed
-        if (!stat || stat === 'aktif') countActive++;
-        else if (['pending','in_progress','disetujui','proses'].includes(stat)) countProcessing++;
-        else if (['selesai','completed','ditolak'].includes(stat)) countCompleted++;
-        else countActive++; // fallback
+        // Hitung berdasarkan status_pengerjaan terlebih dahulu (lebih relevan untuk UI ini)
+        if (statPengerjaan === 'proses') countProcessing++;
+        else if (statPengerjaan === 'selesai') countCompleted++;
+        else {
+          // fallback ke kolom status lama jika status_pengerjaan kosong
+          if (!stat || stat === 'aktif') countActive++;
+          else if (['pending','in_progress','disetujui'].includes(stat)) countProcessing++;
+          else if (['selesai','completed','ditolak'].includes(stat)) countCompleted++;
+          else countActive++;
+        }
 
         // apply filters
-        if (tipe !== 'all' && jenis !== tipe) return;
-        if (status !== 'all' && stat !== status) return;
+        if (tipe !== 'all' && jenis !== tipe) {
+          console.log(`[map.js] Skipping ${row.nama_jalan}: jenis mismatch (${jenis} !== ${tipe})`);
+          return;
+        }
+        if (status !== 'all' && stat !== status) {
+          console.log(`[map.js] Skipping ${row.nama_jalan}: status mismatch (${stat} !== ${status})`);
+          return;
+        }
         // apply status pengerjaan filter
         if (statusPengerjaanFilter !== 'all') {
-          if (statusPengerjaanFilter === 'proses' && statPengerjaan !== 'proses') return;
-          if (statusPengerjaanFilter === 'selesai' && statPengerjaan !== 'selesai') return;
+          if (statusPengerjaanFilter === 'proses' && statPengerjaan !== 'proses') {
+            console.log(`[map.js] Skipping ${row.nama_jalan}: statusPengerjaan mismatch (${statPengerjaan} !== proses)`);
+            return;
+          }
+          if (statusPengerjaanFilter === 'selesai' && statPengerjaan !== 'selesai') {
+            console.log(`[map.js] Skipping ${row.nama_jalan}: statusPengerjaan mismatch (${statPengerjaan} !== selesai)`);
+            return;
+          }
         }
         // apply legend filter
-        if (legendFilter !== 'all' && normalizeSeverity(jenis) !== legendFilter) return;
+        if (legendFilter !== 'all' && normalizeSeverity(jenis) !== legendFilter) {
+          console.log(`[map.js] Skipping ${row.nama_jalan}: legend mismatch`);
+          return;
+        }
 
         // Build popup
         const popup = renderPopupContent(row);
@@ -466,9 +502,11 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
         });
 
         window._damageLayer.addLayer(marker);
+        renderedMarkers++;
+        console.log(`[map.js] ✓ Rendered marker for ${row.nama_jalan}`);
 
         // Jika status 'proses', tambahkan overlay ikon proses yang lebih kecil di atas marker awal
-        const statusPengerjaan = getVal(row, 'status_pengerjaan') || null;
+        const statusPengerjaan = normalizePengerjaan(getVal(row, 'status_pengerjaan', 'statusPengerjaan', 'Status Pengerjaan', 'status pengerjaan')) || '';
         if (statusPengerjaan === 'proses') {
           const overlayIcon = getMarkerIconProsesSmall();
           const overlay = L.marker([lat, lng], { icon: overlayIcon, zIndexOffset: 1000 });
@@ -508,6 +546,7 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
       if (statCompletedMobileEl) statCompletedMobileEl.textContent = countCompleted;
 
       console.log(`[map.js] Successfully loaded ${validMarkers} valid markers out of ${data.length} records`);
+      console.log(`[map.js] Rendered ${renderedMarkers} markers after filtering`);
       console.log('[map.js] Total markers on map:', window._damageLayer.getLayers().length);
       
       if (validMarkers === 0) {
@@ -825,6 +864,14 @@ window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
     checkLocationSelectionMode(); // Cek mode selection
     // expose refresh fn
     window.refreshJalanRusakMarkers = loadMarkersFromSupabase;
+  });
+
+  // Auto-refresh markers when page becomes visible (e.g., switching back from reports page)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      console.log('[map.js] Page visible, refreshing markers...');
+      loadMarkersFromSupabase();
+    }
   });
 
 })();

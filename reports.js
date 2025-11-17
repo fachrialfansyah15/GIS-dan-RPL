@@ -5,6 +5,48 @@ class ReportsPage {
         this.init();
     }
 
+    // Fungsi untuk mengubah status_pengerjaan menjadi "selesai"
+    async selesaiLaporan(id) {
+        console.log('[selesaiLaporan] Called with id:', id);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
+        if (!supabase) {
+            this.showMessage('Supabase tidak tersedia', 'error');
+            return;
+        }
+        if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) {
+            this.showMessage('Hanya admin yang dapat menyelesaikan laporan', 'error');
+            return;
+        }
+        try {
+            console.log('[selesaiLaporan] Updating status_pengerjaan to "selesai" for id:', id);
+            const { data, error } = await supabase
+                .from('jalan_rusak')
+                .update({ status_pengerjaan: 'selesai' })
+                .eq('id', id)
+                .select();
+            console.log('[selesaiLaporan] Update result:', { data, error });
+            if (error) {
+                console.error('[selesaiLaporan] Error:', error);
+                this.showMessage('Gagal menyelesaikan laporan: ' + error.message, 'error');
+                return;
+            }
+            if (!data || data.length === 0) {
+                console.warn('[selesaiLaporan] No rows updated. ID might not exist:', id);
+                this.showMessage('Laporan tidak ditemukan atau sudah selesai', 'warning');
+                return;
+            }
+            console.log('[selesaiLaporan] Successfully updated:', data[0]);
+            this.showMessage('Laporan ditandai selesai. Marker akan berubah di peta.', 'success');
+            await this.renderValidList();
+            if (window.refreshJalanRusakMarkers) {
+                window.refreshJalanRusakMarkers();
+            }
+        } catch (err) {
+            console.error('[selesaiLaporan] Exception:', err);
+            this.showMessage('Terjadi kesalahan saat menyelesaikan laporan', 'error');
+        }
+    }
+
     init() {
         this.checkAuth();
         this.setupEventListeners();
@@ -90,7 +132,7 @@ class ReportsPage {
     async renderBaruList() {
         const box = document.getElementById('laporanBaruList');
         if (!box) return;
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) { box.innerHTML='<div class="no-reports">Supabase config missing.</div>'; return; }
         const isAdmin = window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin();
         const userId = window.auth?.getUserId ? window.auth.getUserId() : null;
@@ -200,7 +242,7 @@ class ReportsPage {
     async renderValidList() {
         const box = document.getElementById('laporanValidList');
         if (!box) return;
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) { box.innerHTML='<div class="no-reports">Supabase config missing.</div>'; return; }
         let rows = [];
         try {
@@ -275,6 +317,9 @@ class ReportsPage {
                             <button class="btn-proses" data-id="${r.id}" style="flex:1;background:#3b82f6;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
                                 <i class="fas fa-wrench"></i> Proses
                             </button>
+                            <button class="btn-selesai" data-id="${r.id}" style="flex:1;background:#16a34a;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
+                                <i class="fas fa-check-circle"></i> Selesai
+                            </button>
                             <button class="btn-hapus" data-id="${r.id}" data-foto="${r.foto_jalan||''}" style="flex:1;background:#dc3545;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease;">
                                 <i class="fas fa-trash"></i> Hapus
                             </button>
@@ -302,6 +347,12 @@ class ReportsPage {
                 btn.addEventListener('click', (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
                     this.prosesLaporan(id);
+                });
+            });
+            document.querySelectorAll('.btn-selesai').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    this.selesaiLaporan(id);
                 });
             });
             
@@ -336,7 +387,7 @@ class ReportsPage {
     }
 
     async viewReportSupabase(reportId, isAdmin) {
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) return;
         const table = isAdmin ? 'jalan_rusak' : 'laporan_masuk';
         const { data, error } = await supabase.from(table).select('*').eq('id', reportId).single();
@@ -345,7 +396,7 @@ class ReportsPage {
     }
 
     async deleteReportSupabase(reportId) {
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) return;
         if (!(window.auth && window.auth.isUserAdmin && window.auth.isUserAdmin())) return;
         const ok = confirm('Hapus laporan ini? Tindakan ini akan menandai laporan sebagai dihapus.');
@@ -356,7 +407,7 @@ class ReportsPage {
 
     // Approve dan reject logic
     async approveLaporan(id) {
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) return;
         const { data: src, error: e1 } = await supabase.from('laporan_masuk').select('*').eq('id', id).single();
         if (e1 || !src) {
@@ -388,7 +439,7 @@ class ReportsPage {
         }
     }
     async rejectLaporan(id) {
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) return;
         const { error } = await supabase.from('laporan_masuk').update({status:'ditolak'}).eq('id',id);
         if (error) {
@@ -400,7 +451,8 @@ class ReportsPage {
 
     // Fungsi untuk mengubah status_pengerjaan menjadi "proses"
     async prosesLaporan(id) {
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        console.log('[prosesLaporan] Called with id:', id);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) {
             this.showMessage('Supabase tidak tersedia', 'error');
             return;
@@ -413,22 +465,34 @@ class ReportsPage {
         }
         
         try {
+            console.log('[prosesLaporan] Updating status_pengerjaan to "proses" for id:', id);
+            
             // Update status_pengerjaan menjadi "proses"
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('jalan_rusak')
                 .update({ status_pengerjaan: 'proses' })
-                .eq('id', id);
+                .eq('id', id)
+                .select();
+            
+            console.log('[prosesLaporan] Update result:', { data, error });
             
             if (error) {
                 console.error('[prosesLaporan] Error:', error);
-                this.showMessage('Gagal memproses laporan', 'error');
+                this.showMessage('Gagal memproses laporan: ' + error.message, 'error');
                 return;
             }
             
+            if (!data || data.length === 0) {
+                console.warn('[prosesLaporan] No rows updated. ID might not exist:', id);
+                this.showMessage('Laporan tidak ditemukan atau sudah diproses', 'warning');
+                return;
+            }
+            
+            console.log('[prosesLaporan] Successfully updated:', data[0]);
             this.showMessage('Laporan berhasil diproses! Marker akan berubah di peta.', 'success');
             
             // Reload laporan untuk update UI
-            await this.loadLaporanValid();
+            await this.renderValidList();
             
             // Refresh marker di peta jika fungsi tersedia
             if (window.refreshJalanRusakMarkers) {
@@ -442,7 +506,7 @@ class ReportsPage {
 
     // Fungsi untuk menghapus laporan (selesai)
     async hapusLaporan(id, fotoPath) {
-        const supabase = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_KEY));
         if (!supabase) {
             this.showMessage('Supabase tidak tersedia', 'error');
             return;
