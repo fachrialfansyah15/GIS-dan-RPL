@@ -4059,6 +4059,20 @@ body { overflow-x: hidden; }
 .status-badge-proses i {
   font-size: 14px !important;
 }
+/* Ensure map preview controls always stick to top-right inside the preview after redirects */
+#mapPreview .map-preview-controls {
+  position: absolute !important;
+  top: 18px !important;
+  right: 10px !important;
+  left: auto !important;
+  z-index: 6 !important; /* above tiles, below header */
+}
+@media (max-width: 600px) {
+  #mapPreview .map-preview-controls {
+    top: 10px !important;
+    right: 8px !important;
+  }
+}
 /* Hover feedback for action buttons */
 .report-actions .btn-proses:hover {
   background: #2563eb !important; /* darker blue */
